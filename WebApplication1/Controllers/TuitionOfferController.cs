@@ -41,5 +41,19 @@ namespace TutorHubBD.Web.Controllers
         {
             return View(_context.TuitionOffers.ToList());
         }
+        // POST: TuitionOffer/Delete/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var offer = await _context.TuitionOffers.FindAsync(id);
+            if (offer != null)
+            {
+                _context.TuitionOffers.Remove(offer);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
     }
 }

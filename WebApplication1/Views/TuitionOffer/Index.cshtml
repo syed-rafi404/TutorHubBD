@@ -8,6 +8,7 @@
             <th>Subject</th>
             <th>Location</th>
             <th>Salary</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -17,7 +18,13 @@
                 <td>@item.Subject</td>
                 <td>@item.Location</td>
                 <td>@item.Fee</td>
+                <td>
+                    <form asp-action="Delete" asp-route-id="@item.OfferID" method="post" onsubmit="return confirm('Are you sure?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
             </tr>
         }
     </tbody>
+
 </table>
