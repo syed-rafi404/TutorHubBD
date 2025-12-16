@@ -1,24 +1,55 @@
 ﻿@model TutorHubBD.Web.Models.TuitionOffer
 
-<h2>Post a Tuition Job</h2>
+@{
+    ViewData["Title"] = "Post a Job";
+}
 
-<form asp-action="Create">
-    <div asp-validation-summary="All" class="text-danger"></div>
-    <div class="form-group">
-        <label>Subject</label>
-        <input asp-for="Subject" class="form-control" />
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3 class="mb-0">Post a Tuition Job</h3>
+                    <p class="mb-0 opacity-75">Find the perfect tutor for your needs</p>
+                </div>
+                <div class="card-body p-5">
+                    <form asp-action="Create">
+                        <!-- Validation Summary for errors -->
+                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Subject" class="form-label fw-bold">Subject</label>
+                                <input asp-for="Subject" class="form-control" placeholder="e.g. Mathematics" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Fee" class="form-label fw-bold">Salary Offer (BDT)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">৳</span>
+                                    <input asp-for="Fee" type="number" class="form-control" placeholder="5000" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Location" class="form-label fw-bold">Location</label>
+                            <input asp-for="Location" class="form-control" placeholder="e.g. Dhanmondi, Road 27" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Time" class="form-label fw-bold">Preferred Time</label>
+                            <input asp-for="Time" class="form-control" placeholder="e.g. 3 Days/Week, 5:00 PM" />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Post Job Now
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="form-group">
-        <label>Location</label>
-        <input asp-for="Location" class="form-control" />
-    </div>
-    <div class="form-group">
-        <label>Time</label>
-        <input asp-for="Time" class="form-control" />
-    </div>
-    <div class="form-group">
-        <label>Salary Offer</label>
-        <input asp-for="Fee" type="number" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary mt-3">Post Job</button>
-</form>
+</div>
