@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using TutorHubBD.Web.Models; 
 
 namespace TutorHubBD.Web.Data
 {
@@ -9,5 +10,9 @@ namespace TutorHubBD.Web.Data
             : base(options)
         {
         }
+
+        // Register the Tables here
+        public DbSet<Tutor> Tutors { get; set; }
+        public DbSet<TuitionOffer> TuitionOffers { get; set; }
     }
 }

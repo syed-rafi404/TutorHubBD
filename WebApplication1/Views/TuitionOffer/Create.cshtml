@@ -1,0 +1,24 @@
+﻿@model TutorHubBD.Web.Models.TuitionOffer
+
+<h2>Post a Tuition Job</h2>
+
+<form asp-action="Create">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="form-group">
+        <label>Subject</label>
+        <input asp-for="Subject" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Location</label>
+        <input asp-for="Location" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Time</label>
+        <input asp-for="Time" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label>Salary Offer</label>
+        <input asp-for="Fee" type="number" class="form-control" />
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Post Job</button>
+</form>

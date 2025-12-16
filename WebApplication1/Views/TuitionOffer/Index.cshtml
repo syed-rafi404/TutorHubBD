@@ -1,0 +1,23 @@
+﻿@model IEnumerable<TutorHubBD.Web.Models.TuitionOffer>
+
+<h2>Available Tuition Jobs</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Subject</th>
+            <th>Location</th>
+            <th>Salary</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Subject</td>
+                <td>@item.Location</td>
+                <td>@item.Fee</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,7 +1,10 @@
-﻿namespace TutorHubBD.Web.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace TutorHubBD.Web.Models
 {
     public class Tutor
     {
+        [Key]
         public int TutorID { get; set; }
         public string Education { get; set; }
         public string Subjects { get; set; }
