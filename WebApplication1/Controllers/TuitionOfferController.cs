@@ -57,13 +57,10 @@ namespace TutorHubBD.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Title,Description,Salary,City,Location,Medium,StudentClass")] TuitionOffer offer)
         {
-            // FIX 1: Remove validation for fields not in the form
             ModelState.Remove("Subject");
             ModelState.Remove("DaysPerWeek");
             ModelState.Remove("GenderPreference");
 
-            // FIX 2: Assign DEFAULT values for database columns that cannot be null
-            // This prevents the SqlException
             offer.Subject = "General"; 
             offer.DaysPerWeek = "Negotiable";
             offer.GenderPreference = "Any";

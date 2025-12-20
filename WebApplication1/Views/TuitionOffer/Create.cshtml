@@ -10,11 +10,9 @@
             <h3 class="mb-0">Post a New Tuition Job</h3>
         </div>
         <div class="card-body">
-            <!-- Removed 'novalidate' to allow browser default validation -->
             <form asp-controller="TuitionOffer" asp-action="Create" method="post">
                 @Html.AntiForgeryToken()
                 
-                <!-- Changed to 'All' so you can see errors for missing fields like Subject -->
                 <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
                 <div class="mb-3">
