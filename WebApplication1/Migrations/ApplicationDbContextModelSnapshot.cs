@@ -226,16 +226,43 @@ namespace TutorHubBD.Web.Migrations
 
             modelBuilder.Entity("TutorHubBD.Web.Models.TuitionOffer", b =>
                 {
-                    b.Property<int>("OfferID")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OfferID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Fee")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DaysPerWeek")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GenderPreference")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Medium")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Salary")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StudentClass")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -243,16 +270,11 @@ namespace TutorHubBD.Web.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Time")
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("TutorID")
-                        .HasColumnType("int");
-
-                    b.HasKey("OfferID");
-
-                    b.HasIndex("TutorID");
+                    b.HasKey("Id");
 
                     b.ToTable("TuitionOffers");
                 });
@@ -333,15 +355,6 @@ namespace TutorHubBD.Web.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("TutorHubBD.Web.Models.TuitionOffer", b =>
-                {
-                    b.HasOne("TutorHubBD.Web.Models.Tutor", "Tutor")
-                        .WithMany()
-                        .HasForeignKey("TutorID");
-
-                    b.Navigation("Tutor");
                 });
 #pragma warning restore 612, 618
         }

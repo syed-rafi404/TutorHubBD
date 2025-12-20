@@ -1,55 +1,83 @@
 ﻿@model TutorHubBD.Web.Models.TuitionOffer
 
 @{
-    ViewData["Title"] = "Post a Job";
+    ViewData["Title"] = "Post a Tuition Job";
 }
 
 <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-lg border-0 rounded-3">
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <h3 class="mb-0">Post a Tuition Job</h3>
-                    <p class="mb-0 opacity-75">Find the perfect tutor for your needs</p>
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Post a New Tuition Job</h3>
+        </div>
+        <div class="card-body">
+            <!-- Removed 'novalidate' to allow browser default validation -->
+            <form asp-controller="TuitionOffer" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                
+                <!-- Changed to 'All' so you can see errors for missing fields like Subject -->
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label">Job Title</label>
+                    <input asp-for="Title" class="form-control" placeholder="e.g. Need Math Tutor for Class 10" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
-                <div class="card-body p-5">
-                    <form asp-action="Create">
-                        <!-- Validation Summary for errors -->
-                        <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label asp-for="Subject" class="form-label fw-bold">Subject</label>
-                                <input asp-for="Subject" class="form-control" placeholder="e.g. Mathematics" />
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Fee" class="form-label fw-bold">Salary Offer (BDT)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">৳</span>
-                                    <input asp-for="Fee" type="number" class="form-control" placeholder="5000" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Location" class="form-label fw-bold">Location</label>
-                            <input asp-for="Location" class="form-control" placeholder="e.g. Dhanmondi, Road 27" />
-                        </div>
-
-                        <div class="mb-4">
-                            <label asp-for="Time" class="form-label fw-bold">Preferred Time</label>
-                            <input asp-for="Time" class="form-control" placeholder="e.g. 3 Days/Week, 5:00 PM" />
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                Post Job Now
-                            </button>
-                            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
-                        </div>
-                    </form>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="City" class="form-label">City</label>
+                        <select asp-for="City" class="form-select">
+                            <option value="">Select City</option>
+                            <option value="Dhaka">Dhaka</option>
+                            <option value="Chittagong">Chittagong</option>
+                            <option value="Sylhet">Sylhet</option>
+                        </select>
+                        <span asp-validation-for="City" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Location" class="form-label">Area / Location</label>
+                        <input asp-for="Location" class="form-control" placeholder="e.g. Mirpur 10" />
+                        <span asp-validation-for="Location" class="text-danger"></span>
+                    </div>
                 </div>
-            </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Medium" class="form-label">Medium</label>
+                        <select asp-for="Medium" class="form-select">
+                            <option value="">Select Medium</option>
+                            <option value="Bangla Medium">Bangla Medium</option>
+                            <option value="English Medium">English Medium</option>
+                            <option value="English Version">English Version</option>
+                        </select>
+                        <span asp-validation-for="Medium" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="StudentClass" class="form-label">Class</label>
+                        <input asp-for="StudentClass" class="form-control" placeholder="e.g. Class 8" />
+                        <span asp-validation-for="StudentClass" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Salary" class="form-label">Salary (Tk)</label>
+                    <input asp-for="Salary" type="number" class="form-control" />
+                    <span asp-validation-for="Salary" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">Details</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Post Job</button>
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </form>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

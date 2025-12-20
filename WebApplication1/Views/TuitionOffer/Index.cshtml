@@ -1,46 +1,69 @@
 ﻿@model IEnumerable<TutorHubBD.Web.Models.TuitionOffer>
 
 @{
-    ViewData["Title"] = "Available Jobs";
+    ViewData["Title"] = "Tuition Jobs";
 }
 
-<div class="container mt-4">
+<div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary">Available Tuition Jobs</h2>
-        <a asp-action="Create" class="btn btn-success rounded-pill px-4 shadow-sm">
-            + Post New Job
+        <h2>Available Tuition Jobs</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Post New Job
         </a>
     </div>
 
-    <!-- Grid of Cards -->
+    <div class="card mb-4 bg-light border-0">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="searchCity" class="form-control" placeholder="City (e.g. Dhaka)" value="@ViewData["CurrentCity"]" />
+                </div>
+                <div class="col-md-3">
+                    <select name="searchMedium" class="form-select">
+                        <option value="">All Mediums</option>
+                        <option value="Bangla Medium">Bangla Medium</option>
+                        <option value="English Medium">English Medium</option>
+                        <option value="English Version">English Version</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="searchClass" class="form-control" placeholder="Class (e.g. Class 8)" value="@ViewData["CurrentClass"]" />
+                </div>
+                <div class="col-md-3 d-grid">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-search"></i> Search Jobs
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="row">
         @foreach (var item in Model)
         {
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 shadow-sm border-0">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title fw-bold text-dark">@item.Subject</h5>
-                            <span class="badge bg-light text-primary border border-primary">
-                                ৳ @item.Fee
-                            </span>
-                        </div>
-                        <h6 class="card-subtitle mb-3 text-muted">
-                            📍 @item.Location
+                        <h5 class="card-title text-primary">@item.Title</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            <i class="bi bi-geo-alt"></i> @item.City, @item.Location
                         </h6>
+                        <p class="card-text">
+                            <strong>Class:</strong> @item.StudentClass <br />
+                            <strong>Medium:</strong> @item.Medium <br />
+                            <strong>Salary:</strong> @item.Salary Tk
+                        </p>
                         <p class="card-text text-secondary small">
-                            ⏰ @item.Time
+                            @item.Description
                         </p>
                     </div>
-                    <div class="card-footer bg-white border-0 pt-0 pb-3">
-                        <div class="d-flex justify-content-end">
-                            <!-- Delete Button Form -->
-                            <form asp-action="Delete" asp-route-id="@item.OfferID" method="post" onsubmit="return confirm('Are you sure you want to delete this job?');">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">
-                                    Delete
-                                </button>
-                            </form>
-                        </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
