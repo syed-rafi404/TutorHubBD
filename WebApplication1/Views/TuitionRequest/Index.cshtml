@@ -1,0 +1,46 @@
+﻿@model IEnumerable<TutorHubBD.Web.Models.TuitionRequest>
+
+@{
+    ViewData["Title"] = "Applications Dashboard";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4"><i class="bi bi-briefcase"></i> Job Applications Received</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">No applications received yet.</div>
+    }
+    else
+    {
+        <table class="table table-hover shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th>Applied For (Job)</th>
+                    <th>Message</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-bold">@item.StudentName</td>
+                        <td>@item.StudentEmail</td>
+                        <td>
+                            <span class="badge bg-primary">
+                                @(item.TuitionOffer != null ? item.TuitionOffer.Title : "Job Deleted")
+                            </span>
+                        </td>
+                        <td>@item.Message</td>
+                        <td>@item.RequestDate.ToString("dd MMM yyyy")</td>
+                        <td><span class="badge bg-warning text-dark">@item.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

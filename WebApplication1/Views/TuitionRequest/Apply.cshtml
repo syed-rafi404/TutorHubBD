@@ -1,0 +1,39 @@
+﻿@model TutorHubBD.Web.Models.TuitionRequest
+
+@{
+    ViewData["Title"] = "Apply for Job";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-sm col-md-8 mx-auto">
+        <div class="card-header bg-success text-white">
+            <h3>Apply for: @ViewData["JobTitle"]</h3>
+        </div>
+        <div class="card-body">
+            <form asp-action="Apply" method="post">
+                <!-- Hidden Job ID -->
+                <input type="hidden" asp-for="TuitionOfferId" />
+
+                <div class="mb-3">
+                    <label class="form-label">Your Name</label>
+                    <input asp-for="StudentName" class="form-control" placeholder="Enter your full name" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email Address</label>
+                    <input asp-for="StudentEmail" class="form-control" placeholder="name@example.com" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Message to Guardian</label>
+                    <textarea asp-for="Message" class="form-control" rows="4" placeholder="Why are you a good fit?"></textarea>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg">Submit Application</button>
+                    <a asp-controller="TuitionOffer" asp-action="Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

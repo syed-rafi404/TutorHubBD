@@ -58,6 +58,10 @@
                         </p>
                     </div>
                     <div class="card-footer bg-transparent border-top-0">
+                        <a asp-controller="TuitionRequest" asp-action="Apply" asp-route-jobId="@item.Id" class="btn btn-success btn-sm">
+                            Apply Now
+                        </a>
+
                         <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
                             @Html.AntiForgeryToken()
                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');">

@@ -14,5 +14,7 @@ namespace TutorHubBD.Web.Data
         // Register the Tables here
         public DbSet<Tutor> Tutors { get; set; }
         public DbSet<TuitionOffer> TuitionOffers { get; set; }
+        public DbSet<TuitionRequest> TuitionRequests { get; set; }
+
     }
 }
