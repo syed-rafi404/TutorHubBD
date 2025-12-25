@@ -479,6 +479,36 @@ body {
     transform: scale(1.1);
 }
 
+.btn-action-accept {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px solid #198754;
+    background: transparent;
+    color: #198754;
+}
+
+.btn-action-accept:hover {
+    background-color: #198754;
+    color: white;
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+}
+
+.btn-action-reject {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 2px solid #dc3545;
+    background: transparent;
+    color: #dc3545;
+}
+
+.btn-action-reject:hover {
+    background-color: #dc3545;
+    color: white;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
 @keyframes fadeInUp {
     from {
         opacity: 0;
