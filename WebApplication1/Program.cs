@@ -17,6 +17,7 @@ builder.Services.AddControllersWithViews();
 
 // Register application services
 builder.Services.AddScoped<ITuitionOfferService, TuitionOfferService>();
+builder.Services.AddScoped<TuitionRequestService>();
 
 var app = builder.Build();
 

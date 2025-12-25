@@ -4,36 +4,40 @@
     ViewData["Title"] = "Apply for Job";
 }
 
-<div class="container mt-5">
-    <div class="card shadow-sm col-md-8 mx-auto">
-        <div class="card-header bg-success text-white">
-            <h3>Apply for: @ViewData["JobTitle"]</h3>
-        </div>
-        <div class="card-body">
-            <form asp-action="Apply" method="post">
-                <!-- Hidden Job ID -->
-                <input type="hidden" asp-for="TuitionOfferId" />
-
-                <div class="mb-3">
-                    <label class="form-label">Your Name</label>
-                    <input asp-for="StudentName" class="form-control" placeholder="Enter your full name" required />
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card p-5">
+                <div class="text-center mb-4">
+                    <h2 class="mb-1">Apply for Job</h2>
+                    <p class="text-white-50">@ViewData["JobTitle"]</p>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
-                    <input asp-for="StudentEmail" class="form-control" placeholder="name@example.com" required />
-                </div>
+                <form asp-action="Apply" method="post">
+                    <!-- Hidden Job ID -->
+                    <input type="hidden" asp-for="TuitionOfferId" />
 
-                <div class="mb-3">
-                    <label class="form-label">Message to Guardian</label>
-                    <textarea asp-for="Message" class="form-control" rows="4" placeholder="Why are you a good fit?"></textarea>
-                </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="StudentName" class="form-control" placeholder="Your Name" required />
+                        <label asp-for="StudentName">Your Name</label>
+                    </div>
 
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-success btn-lg">Submit Application</button>
-                    <a asp-controller="TuitionOffer" asp-action="Index" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
+                    <div class="form-floating mb-3">
+                        <input asp-for="StudentEmail" class="form-control" placeholder="name@example.com" required />
+                        <label asp-for="StudentEmail">Email Address</label>
+                    </div>
+
+                    <div class="form-floating mb-4">
+                        <textarea asp-for="Message" class="form-control" placeholder="Message to Guardian" style="height: 120px"></textarea>
+                        <label asp-for="Message">Message to Guardian (Why are you a good fit?)</label>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-gradient py-3">Submit Application</button>
+                        <a asp-controller="TuitionOffer" asp-action="Index" class="btn btn-outline-white text-center w-100 ms-0">Cancel</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
