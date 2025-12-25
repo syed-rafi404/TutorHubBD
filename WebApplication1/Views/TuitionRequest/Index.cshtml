@@ -4,43 +4,79 @@
     ViewData["Title"] = "Applications Dashboard";
 }
 
-<div class="container mt-5">
-    <h2 class="mb-4"><i class="bi bi-briefcase"></i> Job Applications Received</h2>
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white fw-bold" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+            <i class="bi bi-briefcase me-2"></i> Job Applications Received
+        </h2>
+    </div>
 
     @if (!Model.Any())
     {
-        <div class="alert alert-info">No applications received yet.</div>
+        <div class="alert alert-light shadow-sm border-0 p-4 text-center" role="alert">
+            <h4 class="alert-heading mb-3"><i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i></h4>
+            <p class="mb-0 text-muted">No applications received yet.</p>
+        </div>
     }
     else
     {
-        <table class="table table-hover shadow-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>Student Name</th>
-                    <th>Email</th>
-                    <th>Applied For (Job)</th>
-                    <th>Message</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td class="fw-bold">@item.StudentName</td>
-                        <td>@item.StudentEmail</td>
-                        <td>
-                            <span class="badge bg-primary">
-                                @(item.TuitionOffer != null ? item.TuitionOffer.Title : "Job Deleted")
-                            </span>
-                        </td>
-                        <td>@item.Message</td>
-                        <td>@item.RequestDate.ToString("dd MMM yyyy")</td>
-                        <td><span class="badge bg-warning text-dark">@item.Status</span></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="dashboard-card">
+            <div class="table-responsive">
+                <table class="table dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Email</th>
+                            <th>Applied For (Job)</th>
+                            <th>Message</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold">@item.StudentName</td>
+                                <td>
+                                    <a href="mailto:@item.StudentEmail" class="text-decoration-none text-secondary">
+                                        <i class="bi bi-envelope me-1"></i> @item.StudentEmail
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge-job-title">
+                                        @(item.TuitionOffer != null ? item.TuitionOffer.Title : "Job Deleted")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="d-inline-block text-truncate" style="max-width: 200px;" title="@item.Message">
+                                        @item.Message
+                                    </span>
+                                </td>
+                                <td>@item.RequestDate.ToString("dd MMM yyyy")</td>
+                                <td>
+                                    @{
+                                        var statusClass = item.Status?.ToLower() switch
+                                        {
+                                            "accepted" => "badge-accepted",
+                                            "rejected" => "badge-rejected",
+                                            _ => "badge-pending"
+                                        };
+                                    }
+                                    <span class="badge-status @statusClass">@item.Status</span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary me-1" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    <!-- Placeholder for future Accept/Reject actions -->
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     }
 </div>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace TutorHubBD.Web.Models // NOTE: I added ".Web" because your project seems to be TutorHubBD.Web based on error logs
+namespace TutorHubBD.Web.Models
 {
     public class TuitionOffer
     {

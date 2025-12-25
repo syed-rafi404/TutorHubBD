@@ -1,77 +1,91 @@
-﻿@model TutorHubBD.Web.Models.TuitionOffer
+﻿@model TutorHubBD.Web.Models.ViewModels.TuitionOfferCreateViewModel
 
 @{
     ViewData["Title"] = "Post a Tuition Job";
 }
 
-<div class="container mt-5">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Post a New Tuition Job</h3>
-        </div>
-        <div class="card-body">
-            <form asp-controller="TuitionOffer" asp-action="Create" method="post">
-                @Html.AntiForgeryToken()
-                
-                <div asp-validation-summary="All" class="text-danger mb-3"></div>
-
-                <div class="mb-3">
-                    <label asp-for="Title" class="form-label">Job Title</label>
-                    <input asp-for="Title" class="form-control" placeholder="e.g. Need Math Tutor for Class 10" />
-                    <span asp-validation-for="Title" class="text-danger"></span>
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="glass-card p-5">
+                <div class="text-center mb-4">
+                    <h2 class="mb-1">Post a New Tuition Job</h2>
+                    <p class="text-white-50">Find the perfect tutor for your needs</p>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="City" class="form-label">City</label>
-                        <select asp-for="City" class="form-select">
-                            <option value="">Select City</option>
-                            <option value="Dhaka">Dhaka</option>
-                            <option value="Chittagong">Chittagong</option>
-                            <option value="Sylhet">Sylhet</option>
-                        </select>
-                        <span asp-validation-for="City" class="text-danger"></span>
+                <form asp-controller="TuitionOffer" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    
+                    <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Title" class="form-control" placeholder="Job Title" />
+                        <label asp-for="Title">Job Title (e.g. Need Math Tutor for Class 10)</label>
+                        <span asp-validation-for="Title" class="text-danger small"></span>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Location" class="form-label">Area / Location</label>
-                        <input asp-for="Location" class="form-control" placeholder="e.g. Mirpur 10" />
-                        <span asp-validation-for="Location" class="text-danger"></span>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select asp-for="City" class="form-select">
+                                    <option value="" selected disabled>Select City</option>
+                                    <option value="Dhaka">Dhaka</option>
+                                    <option value="Chittagong">Chittagong</option>
+                                    <option value="Sylhet">Sylhet</option>
+                                </select>
+                                <label asp-for="City">City</label>
+                            </div>
+                            <span asp-validation-for="City" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input asp-for="Location" class="form-control" placeholder="Area / Location" />
+                                <label asp-for="Location">Area / Location (e.g. Mirpur 10)</label>
+                            </div>
+                            <span asp-validation-for="Location" class="text-danger small"></span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Medium" class="form-label">Medium</label>
-                        <select asp-for="Medium" class="form-select">
-                            <option value="">Select Medium</option>
-                            <option value="Bangla Medium">Bangla Medium</option>
-                            <option value="English Medium">English Medium</option>
-                            <option value="English Version">English Version</option>
-                        </select>
-                        <span asp-validation-for="Medium" class="text-danger"></span>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <select asp-for="Medium" class="form-select">
+                                    <option value="" selected disabled>Select Medium</option>
+                                    <option value="Bangla Medium">Bangla Medium</option>
+                                    <option value="English Medium">English Medium</option>
+                                    <option value="English Version">English Version</option>
+                                </select>
+                                <label asp-for="Medium">Medium</label>
+                            </div>
+                            <span asp-validation-for="Medium" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-floating">
+                                <input asp-for="StudentClass" class="form-control" placeholder="Class" />
+                                <label asp-for="StudentClass">Class (e.g. Class 8)</label>
+                            </div>
+                            <span asp-validation-for="StudentClass" class="text-danger small"></span>
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="StudentClass" class="form-label">Class</label>
-                        <input asp-for="StudentClass" class="form-control" placeholder="e.g. Class 8" />
-                        <span asp-validation-for="StudentClass" class="text-danger"></span>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Salary" type="number" class="form-control" placeholder="Salary" />
+                        <label asp-for="Salary">Salary (Tk)</label>
+                        <span asp-validation-for="Salary" class="text-danger small"></span>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label asp-for="Salary" class="form-label">Salary (Tk)</label>
-                    <input asp-for="Salary" type="number" class="form-control" />
-                    <span asp-validation-for="Salary" class="text-danger"></span>
-                </div>
+                    <div class="form-floating mb-4">
+                        <textarea asp-for="Description" class="form-control" placeholder="Details" style="height: 150px"></textarea>
+                        <label asp-for="Description">Job Details / Requirements</label>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
 
-                <div class="mb-3">
-                    <label asp-for="Description" class="form-label">Details</label>
-                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                    <span asp-validation-for="Description" class="text-danger"></span>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Post Job</button>
-                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
-            </form>
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-gradient flex-grow-1 py-3">Post Job</button>
+                        <a asp-action="Index" class="btn btn-outline-light py-3 px-4">Cancel</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

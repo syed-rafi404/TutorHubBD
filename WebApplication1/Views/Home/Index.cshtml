@@ -2,7 +2,48 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container hero-section">
+    <div class="row align-items-center w-100">
+
+        <!-- Left Column: Text -->
+        <div class="col-lg-6 text-start">
+            <h4 class="mb-2" style="font-weight: 500;">Welcome to</h4>
+            <h1 class="hero-title">TutorHubBD</h1>
+            <h3 class="hero-subtitle">An AI-Powered Tuition Marketplace Platform</h3>
+
+            <p class="hero-desc">
+                Empower your academic future with the right guidance. TutorHub BD seamlessly connects dedicated students with verified tutors, making quality education accessible and tuition jobs easier to find. Experience a platform where your skills are valued and learning knows no bounds.
+            </p>
+
+            <p class="mb-4 text-white" style="font-size: 1.1rem;">
+                Take the help of our latest AI model to <br />
+                get a suitable teacher for your child
+            </p>
+
+            <div class="d-flex">
+                <a asp-controller="Account" asp-action="Register" class="btn btn-pink">Register</a>
+                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-white">Sign In</a>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Image -->
+        <div class="col-lg-6 text-end hero-image-container">
+            <!-- Ensure your image is named 'hero-main.png' in wwwroot/images -->
+            <img src="~/images/hero-main.png" alt="Tutor and Student" class="hero-img" />
+        </div>
+    </div>
+</div>
+
+<!-- Footer Contact Bar (White strip at bottom) -->
+<div class="footer-contact-bar">
+    <div class="footer-item">
+        <i class="bi bi-telephone-fill"></i> +8801471-817161
+    </div>
+    <div class="footer-item">
+        <i class="bi bi-globe"></i> www.tutorhubbd.com
+    </div>
+    <div class="footer-item">
+        <i class="bi bi-envelope-fill"></i> hello@tutorhubbd.com
+    </div>
 </div>

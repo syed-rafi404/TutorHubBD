@@ -4,70 +4,80 @@
     ViewData["Title"] = "Tuition Jobs";
 }
 
-<div class="container mt-5">
+<div class="container mt-5 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Available Tuition Jobs</h2>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Post New Job
-        </a>
+        <h2 class="text-white fw-bold" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">Available Tuition Jobs</h2>
     </div>
 
-    <div class="card mb-4 bg-light border-0">
-        <div class="card-body">
-            <form asp-action="Index" method="get" class="row g-3">
-                <div class="col-md-3">
-                    <input type="text" name="searchCity" class="form-control" placeholder="City (e.g. Dhaka)" value="@ViewData["CurrentCity"]" />
-                </div>
-                <div class="col-md-3">
-                    <select name="searchMedium" class="form-select">
-                        <option value="">All Mediums</option>
-                        <option value="Bangla Medium">Bangla Medium</option>
-                        <option value="English Medium">English Medium</option>
-                        <option value="English Version">English Version</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="searchClass" class="form-control" placeholder="Class (e.g. Class 8)" value="@ViewData["CurrentClass"]" />
-                </div>
-                <div class="col-md-3 d-grid">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-search"></i> Search Jobs
-                    </button>
-                </div>
-            </form>
-        </div>
+    <div class="glass-filter-container mb-5">
+        <form asp-action="Index" method="get" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="searchCity" class="form-control" placeholder="City (e.g. Dhaka)" value="@ViewData["CurrentCity"]" />
+            </div>
+            <div class="col-md-3">
+                <select name="searchMedium" class="form-select">
+                    <option value="" class="text-dark">All Mediums</option>
+                    <option value="Bangla Medium" class="text-dark">Bangla Medium</option>
+                    <option value="English Medium" class="text-dark">English Medium</option>
+                    <option value="English Version" class="text-dark">English Version</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="searchClass" class="form-control" placeholder="Class (e.g. Class 8)" value="@ViewData["CurrentClass"]" />
+            </div>
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-gradient fw-bold">
+                    <i class="bi bi-search me-2"></i> Search Jobs
+                </button>
+            </div>
+        </form>
     </div>
 
     <div class="row">
         @foreach (var item in Model)
         {
-            <div class="col-md-6 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">@item.Title</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            <i class="bi bi-geo-alt"></i> @item.City, @item.Location
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 job-card border-0">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="job-card-title mb-0">@item.Title</h5>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-icon-delete" onclick="return confirm('Are you sure you want to delete this job?');" title="Delete Job">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <h6 class="job-card-subtitle mb-3">
+                            <i class="bi bi-geo-alt-fill me-1 text-danger"></i> @item.City, @item.Location
                         </h6>
-                        <p class="card-text">
-                            <strong>Class:</strong> @item.StudentClass <br />
-                            <strong>Medium:</strong> @item.Medium <br />
-                            <strong>Salary:</strong> @item.Salary Tk
-                        </p>
-                        <p class="card-text text-secondary small">
-                            @item.Description
-                        </p>
-                    </div>
-                    <div class="card-footer bg-transparent border-top-0">
-                        <a asp-controller="TuitionRequest" asp-action="Apply" asp-route-jobId="@item.Id" class="btn btn-success btn-sm">
-                            Apply Now
-                        </a>
+                        
+                        <div class="mb-3">
+                            <span class="job-info-badge"><i class="bi bi-book me-1"></i> @item.StudentClass</span>
+                            <span class="job-info-badge"><i class="bi bi-translate me-1"></i> @item.Medium</span>
+                        </div>
 
-                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?');">
-                                <i class="bi bi-trash"></i> Delete
-                            </button>
-                        </form>
+                        <h5 class="text-white mb-3">
+                            <span class="fw-bold text-success">@item.Salary Tk</span> <small class="text-white-50">/ month</small>
+                        </h5>
+
+                        <p class="card-text text-white-50 small mb-4 flex-grow-1">
+                            @if (item.Description.Length > 100)
+                            {
+                                @item.Description.Substring(0, 100) <text>...</text>
+                            }
+                            else
+                            {
+                                @item.Description
+                            }
+                        </p>
+
+                        <div class="d-grid">
+                            <a asp-controller="TuitionRequest" asp-action="Apply" asp-route-jobId="@item.Id" class="btn btn-outline-white-premium">
+                                Apply Now
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
