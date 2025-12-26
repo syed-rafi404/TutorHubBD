@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<TutorHubBD.Web.Models.TuitionRequest>
+@using TutorHubBD.Web.Models
 
 @{
     ViewData["Title"] = "Applications Dashboard";
@@ -63,6 +64,10 @@
                                     <span class="badge-job-title">
                                         @(item.TuitionOffer != null ? item.TuitionOffer.Title : "Job Deleted")
                                     </span>
+                                    @if (item.TuitionOffer != null && item.TuitionOffer.Status == JobStatus.Filled)
+                                    {
+                                        <span class="badge bg-secondary ms-1">Filled</span>
+                                    }
                                 </td>
                                 <td>
                                     <span class="d-inline-block text-truncate" style="max-width: 200px;" title="@item.Message">
@@ -82,9 +87,9 @@
                                     <span class="badge-status @statusClass">@item.Status</span>
                                 </td>
                                 <td class="text-end">
-                                    @if (item.Status == "Pending")
-                                    {
-                                        <div class="d-flex justify-content-end gap-2">
+                                    <div class="d-flex justify-content-end gap-2 align-items-center">
+                                        @if (item.Status == "Pending")
+                                        {
                                             <form asp-action="UpdateStatus" method="post" class="d-inline">
                                                 <input type="hidden" name="id" value="@item.RequestID" />
                                                 <input type="hidden" name="status" value="Accepted" />
@@ -99,16 +104,34 @@
                                                     <i class="fa-solid fa-xmark"></i>
                                                 </button>
                                             </form>
-                                        </div>
-                                    }
-                                    else if (item.Status == "Accepted")
-                                    {
-                                        <span class="badge bg-success">Shortlisted</span>
-                                    }
-                                    else if (item.Status == "Rejected")
-                                    {
-                                        <span class="badge bg-secondary">Rejected</span>
-                                    }
+                                        }
+                                        else if (item.Status == "Accepted")
+                                        {
+                                            <span class="badge bg-success me-2">Shortlisted</span>
+                                            
+                                            @if (item.TuitionOffer != null && item.TuitionOffer.Status == JobStatus.Open)
+                                            {
+                                                @if (item.TutorId.HasValue && item.TutorId.Value > 0)
+                                                {
+                                                    <form asp-controller="TuitionOffer" asp-action="ConfirmHiring" method="post" class="d-inline">
+                                                        <input type="hidden" name="jobId" value="@item.TuitionOfferId" />
+                                                        <input type="hidden" name="tutorId" value="@item.TutorId.Value" />
+                                                        <button type="submit" class="btn btn-sm btn-primary fw-bold" onclick="return confirm('Are you sure you want to hire this tutor? This will close the job post.');">
+                                                            Hire This Tutor
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning text-dark" title="This applicant does not have a tutor profile linked">No Tutor Profile</span>
+                                                }
+                                            }
+                                        }
+                                        else if (item.Status == "Rejected")
+                                        {
+                                            <span class="badge bg-secondary">Rejected</span>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }

@@ -1,8 +1,16 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TutorHubBD.Web.Models
 {
+    public enum JobStatus
+    {
+        Open,
+        Filled,
+        Closed
+    }
+
     public class TuitionOffer
     {
         public int Id { get; set; }
@@ -33,5 +41,12 @@ namespace TutorHubBD.Web.Models
         public string DaysPerWeek { get; set; }
         public string GenderPreference { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+        public JobStatus Status { get; set; } = JobStatus.Open;
+
+        public int? HiredTutorId { get; set; }
+
+        [ForeignKey("HiredTutorId")]
+        public Tutor HiredTutor { get; set; }
     }
 }

@@ -34,51 +34,62 @@
     </div>
 
     <div class="row">
-        @foreach (var item in Model)
+        @if (Model != null && Model.Any())
         {
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card h-100 job-card border-0">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="job-card-title mb-0">@item.Title</h5>
-                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn-icon-delete" onclick="return confirm('Are you sure you want to delete this job?');" title="Delete Job">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                        
-                        <h6 class="job-card-subtitle mb-3">
-                            <i class="bi bi-geo-alt-fill me-1 text-danger"></i> @item.City, @item.Location
-                        </h6>
-                        
-                        <div class="mb-3">
-                            <span class="job-info-badge"><i class="bi bi-book me-1"></i> @item.StudentClass</span>
-                            <span class="job-info-badge"><i class="bi bi-translate me-1"></i> @item.Medium</span>
-                        </div>
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 job-card border-0">
+                        <div class="card-body p-4 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="job-card-title mb-0">@(item.Title ?? "Untitled")</h5>
+                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-icon-delete" onclick="return confirm('Are you sure you want to delete this job?');" title="Delete Job">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <h6 class="job-card-subtitle mb-3">
+                                <i class="bi bi-geo-alt-fill me-1 text-danger"></i> @(item.City ?? "N/A"), @(item.Location ?? "N/A")
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <span class="job-info-badge"><i class="bi bi-book me-1"></i> @(item.StudentClass ?? "N/A")</span>
+                                <span class="job-info-badge"><i class="bi bi-translate me-1"></i> @(item.Medium ?? "N/A")</span>
+                            </div>
 
-                        <h5 class="text-white mb-3">
-                            <span class="fw-bold text-success">@item.Salary Tk</span> <small class="text-white-50">/ month</small>
-                        </h5>
+                            <h5 class="text-white mb-3">
+                                <span class="fw-bold text-success">@item.Salary Tk</span> <small class="text-white-50">/ month</small>
+                            </h5>
 
-                        <p class="card-text text-white-50 small mb-4 flex-grow-1">
-                            @if (item.Description.Length > 100)
-                            {
-                                @item.Description.Substring(0, 100) <text>...</text>
-                            }
-                            else
-                            {
-                                @item.Description
-                            }
-                        </p>
+                            <p class="card-text text-white-50 small mb-4 flex-grow-1">
+                                @if (!string.IsNullOrEmpty(item.Description) && item.Description.Length > 100)
+                                {
+                                    @item.Description.Substring(0, 100)<text>...</text>
+                                }
+                                else
+                                {
+                                    @(item.Description ?? "No description available")
+                                }
+                            </p>
 
-                        <div class="d-grid">
-                            <a asp-controller="TuitionRequest" asp-action="Apply" asp-route-jobId="@item.Id" class="btn btn-outline-white-premium">
-                                Apply Now
-                            </a>
+                            <div class="d-grid">
+                                <a asp-controller="TuitionRequest" asp-action="Apply" asp-route-jobId="@item.Id" class="btn btn-outline-white-premium">
+                                    Apply Now
+                                </a>
+                            </div>
                         </div>
                     </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i> No tuition jobs available at the moment.
                 </div>
             </div>
         }

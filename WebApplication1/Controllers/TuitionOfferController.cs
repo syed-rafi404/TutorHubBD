@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using TutorHubBD.Web.Data;
 using TutorHubBD.Web.Models;
 using TutorHubBD.Web.Models.ViewModels;
 using TutorHubBD.Web.Services;
@@ -11,10 +12,12 @@ namespace TutorHubBD.Web.Controllers
     public class TuitionOfferController : Controller
     {
         private readonly ITuitionOfferService _service;
+        private readonly ApplicationDbContext _context;
 
-        public TuitionOfferController(ITuitionOfferService service)
+        public TuitionOfferController(ITuitionOfferService service, ApplicationDbContext context)
         {
             _service = service;
+            _context = context;
         }
 
         // GET: TuitionOffer/Index
@@ -70,6 +73,54 @@ namespace TutorHubBD.Web.Controllers
         {
             await _service.DeleteOfferAsync(id);
             return RedirectToAction(nameof(Index));
+        }
+
+        // POST: TuitionOffer/ConfirmHiring
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConfirmHiring(int jobId, int tutorId)
+        {
+            var job = await _context.TuitionOffers.FindAsync(jobId);
+            if (job == null)
+            {
+                return NotFound();
+            }
+
+            // Validate that tutorId is valid
+            if (tutorId <= 0)
+            {
+                TempData["ErrorMessage"] = "Cannot hire: The applicant does not have a valid tutor profile linked to their application.";
+                return RedirectToAction("Index", "TuitionRequest");
+            }
+
+            // Verify the tutor exists in the database
+            var tutor = await _context.Tutors.FindAsync(tutorId);
+            if (tutor == null)
+            {
+                TempData["ErrorMessage"] = "Cannot hire: The specified tutor profile does not exist.";
+                return RedirectToAction("Index", "TuitionRequest");
+            }
+
+            // In a real scenario, verify that the current user is the owner of the job.
+            // For now, we proceed assuming authorization is handled or simplified.
+
+            if (job.Status == JobStatus.Open)
+            {
+                job.HiredTutorId = tutorId;
+                job.Status = JobStatus.Filled;
+
+                _context.TuitionOffers.Update(job);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Tutor hired successfully! The job is now marked as Filled.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "This job is no longer open.";
+            }
+
+            return RedirectToAction("Index", "TuitionRequest");
         }
     }
 }

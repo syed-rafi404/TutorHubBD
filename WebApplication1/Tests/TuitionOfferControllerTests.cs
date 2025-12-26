@@ -19,7 +19,7 @@ namespace TutorHubBD.Web.Tests
             var mockService = new Mock<ITuitionOfferService>();
             mockService.Setup(service => service.SearchOffersAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new List<TuitionOffer>());
-            var controller = new TuitionOfferController(mockService.Object);
+            var controller = new TuitionOfferController(mockService.Object, null);
 
             // Act
             var result = await controller.Index(null, null, null);
@@ -34,7 +34,7 @@ namespace TutorHubBD.Web.Tests
         {
             // Arrange
             var mockService = new Mock<ITuitionOfferService>();
-            var controller = new TuitionOfferController(mockService.Object);
+            var controller = new TuitionOfferController(mockService.Object, null);
             var viewModel = new TuitionOfferCreateViewModel
             {
                 Title = "Test Title",
@@ -60,7 +60,7 @@ namespace TutorHubBD.Web.Tests
         {
             // Arrange
             var mockService = new Mock<ITuitionOfferService>();
-            var controller = new TuitionOfferController(mockService.Object);
+            var controller = new TuitionOfferController(mockService.Object, null);
             controller.ModelState.AddModelError("Title", "Required");
             var viewModel = new TuitionOfferCreateViewModel();
 

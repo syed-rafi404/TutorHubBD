@@ -18,8 +18,7 @@ namespace TutorHubBD.Web.Services
 
         public async Task<List<TuitionOffer>> SearchOffersAsync(string city, string medium, string studentClass)
         {
-            var jobs = from j in _context.TuitionOffers
-                       select j;
+            var jobs = _context.TuitionOffers.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(city))
             {
@@ -57,7 +56,7 @@ namespace TutorHubBD.Web.Services
 
         public async Task<TuitionOffer?> GetOfferByIdAsync(int id)
         {
-            return await _context.TuitionOffers.FindAsync(id);
+            return await _context.TuitionOffers.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id);
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TutorHubBD.Web.Data;
 
@@ -11,9 +12,11 @@ using TutorHubBD.Web.Data;
 namespace TutorHubBD.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251226093255_HiringWorkflow")]
+    partial class HiringWorkflow
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,13 +363,7 @@ namespace TutorHubBD.Web.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("TutorID");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Tutors");
                 });
@@ -446,17 +443,6 @@ namespace TutorHubBD.Web.Migrations
                     b.Navigation("TuitionOffer");
 
                     b.Navigation("Tutor");
-                });
-
-            modelBuilder.Entity("TutorHubBD.Web.Models.Tutor", b =>
-                {
-                    b.HasOne("TutorHubBD.Web.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

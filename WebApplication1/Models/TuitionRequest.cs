@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TutorHubBD.Web.Models
 {
@@ -24,6 +25,10 @@ namespace TutorHubBD.Web.Models
 
         // Link this request to a specific Job Post
         public int TuitionOfferId { get; set; }
-        public virtual TuitionOffer TuitionOffer { get; set; }
+        public TuitionOffer TuitionOffer { get; set; }
+
+        public int? TutorId { get; set; }
+        [ForeignKey("TutorId")]
+        public Tutor Tutor { get; set; }
     }
 }

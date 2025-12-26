@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TutorHubBD.Web.Models
 {
@@ -10,6 +11,9 @@ namespace TutorHubBD.Web.Models
         public string Subjects { get; set; }
         public float Rating { get; set; }
         public bool IsVerified { get; set; }
-        // We will add the User relationship later
+        
+        public string UserId { get; set; }
+        [ForeignKey("UserId")]
+        public ApplicationUser User { get; set; }
     }
 }
