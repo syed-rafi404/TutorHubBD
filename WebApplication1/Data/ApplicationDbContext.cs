@@ -16,6 +16,7 @@ namespace TutorHubBD.Web.Data
         public DbSet<TuitionOffer> TuitionOffers { get; set; }
         public DbSet<TuitionRequest> TuitionRequests { get; set; }
         public DbSet<CommissionInvoice> CommissionInvoices { get; set; }
+        public DbSet<Review> Reviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -42,6 +43,13 @@ namespace TutorHubBD.Web.Data
                 .HasForeignKey(to => to.HiredTutorId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // Configure TuitionOffer -> Guardian relationship - Use Restrict to avoid cascade cycle
+            modelBuilder.Entity<TuitionOffer>()
+                .HasOne(to => to.Guardian)
+                .WithMany()
+                .HasForeignKey(to => to.GuardianId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Configure Tutor -> User relationship
             modelBuilder.Entity<Tutor>()
                 .HasOne(t => t.User)
@@ -61,6 +69,25 @@ namespace TutorHubBD.Web.Data
                 .WithMany()
                 .HasForeignKey(ci => ci.JobId)
                 .OnDelete(DeleteBehavior.Restrict); // Prevent deleting job if invoice exists
+
+            // Configure Review relationships - Use Restrict/NoAction to avoid cascade cycles
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Job)
+                .WithMany()
+                .HasForeignKey(r => r.JobId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade cycle
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Reviewer)
+                .WithMany()
+                .HasForeignKey(r => r.ReviewerId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade cycle
+
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Tutor)
+                .WithMany()
+                .HasForeignKey(r => r.TutorId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade cycle
         }
     }
 }

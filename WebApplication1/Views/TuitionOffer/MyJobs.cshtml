@@ -1,0 +1,125 @@
+@model IEnumerable<TutorHubBD.Web.Models.TuitionOffer>
+
+@{
+    ViewData["Title"] = "My Jobs";
+    var reviewedJobIds = ViewData["ReviewedJobIds"] as List<int> ?? new List<int>();
+}
+
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white fw-bold" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+            <i class="bi bi-briefcase me-2"></i>My Posted Jobs
+        </h2>
+        <a asp-action="Create" class="btn btn-success">
+            <i class="bi bi-plus-lg me-2"></i>Post New Job
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var job in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge @GetStatusBadgeClass(job.Status) fs-6">
+                                @job.Status
+                            </span>
+                            <small class="text-muted">@job.CreatedAt.ToString("MMM dd, yyyy")</small>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@job.Title</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                <i class="bi bi-geo-alt me-1"></i>@job.City, @job.Location
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <span class="badge bg-secondary me-1">@job.StudentClass</span>
+                                <span class="badge bg-secondary">@job.Medium</span>
+                            </div>
+
+                            <p class="card-text text-success fw-bold mb-3">
+                                <i class="bi bi-currency-exchange me-1"></i>@job.Salary Tk / month
+                            </p>
+
+                            @if (job.Status == TutorHubBD.Web.Models.JobStatus.Filled && job.HiredTutor != null)
+                            {
+                                <div class="alert alert-info py-2 mb-3">
+                                    <small>
+                                        <i class="bi bi-person-check me-1"></i>
+                                        <strong>Hired Tutor:</strong> 
+                                        @(job.HiredTutor.User?.FullName ?? job.HiredTutor.User?.UserName ?? "Unknown")
+                                    </small>
+                                </div>
+                            }
+
+                            <div class="mt-auto">
+                                @if (job.Status == TutorHubBD.Web.Models.JobStatus.Filled && job.HiredTutorId != null)
+                                {
+                                    @if (!reviewedJobIds.Contains(job.Id))
+                                    {
+                                        <a asp-controller="Review" asp-action="Create" asp-route-jobId="@job.Id" 
+                                           class="btn btn-warning w-100">
+                                            <i class="bi bi-star me-2"></i>Rate Tutor
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-success w-100" disabled>
+                                            <i class="bi bi-check-circle me-2"></i>Review Submitted
+                                        </button>
+                                    }
+                                }
+                                else if (job.Status == TutorHubBD.Web.Models.JobStatus.Open)
+                                {
+                                    <a asp-controller="TuitionRequest" asp-action="Index" class="btn btn-outline-primary w-100">
+                                        <i class="bi bi-people me-2"></i>View Applications
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>You haven't posted any jobs yet.
+                    <a asp-action="Create" class="alert-link">Post your first job now!</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(TutorHubBD.Web.Models.JobStatus status)
+    {
+        return status switch
+        {
+            TutorHubBD.Web.Models.JobStatus.Open => "bg-success",
+            TutorHubBD.Web.Models.JobStatus.Filled => "bg-primary",
+            TutorHubBD.Web.Models.JobStatus.Closed => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+}

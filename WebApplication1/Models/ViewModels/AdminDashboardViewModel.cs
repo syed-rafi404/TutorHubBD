@@ -10,5 +10,6 @@ namespace TutorHubBD.Web.Models.ViewModels
         public decimal TotalRevenue { get; set; }
         public List<CommissionInvoice> PendingInvoices { get; set; } = new List<CommissionInvoice>();
         public List<Tutor> RecentVerifications { get; set; } = new List<Tutor>();
+        public List<Tutor> PendingVerifications { get; set; } = new List<Tutor>();
     }
 }

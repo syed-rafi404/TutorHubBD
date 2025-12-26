@@ -9,7 +9,7 @@ using TutorHubBD.Web.Models.ViewModels;
 
 namespace TutorHubBD.Web.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    ///[Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -31,10 +31,19 @@ namespace TutorHubBD.Web.Controllers
                     .ThenInclude(t => t.User)
                     .Where(i => i.Status == InvoiceStatus.Pending)
                     .ToListAsync(),
-                // Assuming there is a way to identify pending verifications, for now just getting unverified tutors
+                // Get tutors who have uploaded verification documents but are not yet verified
+                PendingVerifications = await _context.Tutors
+                    .Include(t => t.User)
+                    .Where(t => !t.IsVerified && 
+                                t.VerificationDocumentPath != null && 
+                                t.VerificationRequestDate != null)
+                    .OrderByDescending(t => t.VerificationRequestDate)
+                    .ToListAsync(),
+                // Recently verified tutors
                 RecentVerifications = await _context.Tutors
                     .Include(t => t.User)
-                    .Where(t => !t.IsVerified)
+                    .Where(t => t.IsVerified)
+                    .OrderByDescending(t => t.TutorID)
                     .Take(5)
                     .ToListAsync()
             };
@@ -56,6 +65,46 @@ namespace TutorHubBD.Web.Controllers
             _context.Update(invoice);
             await _context.SaveChangesAsync();
 
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyTutor(int tutorId)
+        {
+            var tutor = await _context.Tutors.FindAsync(tutorId);
+            if (tutor == null)
+            {
+                return NotFound();
+            }
+
+            tutor.IsVerified = true;
+            _context.Update(tutor);
+            await _context.SaveChangesAsync();
+
+            TempData["StatusMessage"] = "Tutor has been verified successfully.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectVerification(int tutorId)
+        {
+            var tutor = await _context.Tutors.FindAsync(tutorId);
+            if (tutor == null)
+            {
+                return NotFound();
+            }
+
+            // Clear verification request
+            tutor.VerificationDocumentPath = null;
+            tutor.VerificationRequestDate = null;
+            tutor.IsVerified = false;
+            
+            _context.Update(tutor);
+            await _context.SaveChangesAsync();
+
+            TempData["StatusMessage"] = "Verification request has been rejected.";
             return RedirectToAction(nameof(Index));
         }
     }

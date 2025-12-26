@@ -48,5 +48,11 @@ namespace TutorHubBD.Web.Models
 
         [ForeignKey("HiredTutorId")]
         public Tutor HiredTutor { get; set; }
+
+        // Guardian who posted the job
+        public string? GuardianId { get; set; }
+
+        [ForeignKey("GuardianId")]
+        public ApplicationUser Guardian { get; set; }
     }
 }

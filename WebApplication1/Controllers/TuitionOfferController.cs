@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using TutorHubBD.Web.Data;
 using TutorHubBD.Web.Models;
@@ -14,12 +16,18 @@ namespace TutorHubBD.Web.Controllers
         private readonly ITuitionOfferService _service;
         private readonly ApplicationDbContext _context;
         private readonly ICommissionService _commissionService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TuitionOfferController(ITuitionOfferService service, ApplicationDbContext context, ICommissionService commissionService)
+        public TuitionOfferController(
+            ITuitionOfferService service, 
+            ApplicationDbContext context, 
+            ICommissionService commissionService,
+            UserManager<ApplicationUser> userManager)
         {
             _service = service;
             _context = context;
             _commissionService = commissionService;
+            _userManager = userManager;
         }
 
         // GET: TuitionOffer/Index
@@ -34,7 +42,37 @@ namespace TutorHubBD.Web.Controllers
             return View(jobs);
         }
 
+        // GET: TuitionOffer/MyJobs - Shows jobs posted by the current Guardian
+        [Authorize]
+        public async Task<IActionResult> MyJobs()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var myJobs = await _context.TuitionOffers
+                .Include(j => j.HiredTutor)
+                    .ThenInclude(t => t.User)
+                .Where(j => j.GuardianId == user.Id)
+                .OrderByDescending(j => j.CreatedAt)
+                .ToListAsync();
+
+            // Get review status for each job
+            var jobIds = myJobs.Select(j => j.Id).ToList();
+            var reviewedJobIds = await _context.Reviews
+                .Where(r => jobIds.Contains(r.JobId))
+                .Select(r => r.JobId)
+                .ToListAsync();
+
+            ViewData["ReviewedJobIds"] = reviewedJobIds;
+
+            return View(myJobs);
+        }
+
         // GET: TuitionOffer/Create
+        [Authorize]
         public IActionResult Create()
         {
             return View();
@@ -42,6 +80,7 @@ namespace TutorHubBD.Web.Controllers
 
         // POST: TuitionOffer/Create
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(TuitionOfferCreateViewModel model)
         {
@@ -49,6 +88,8 @@ namespace TutorHubBD.Web.Controllers
             {
                 return View(model);
             }
+
+            var user = await _userManager.GetUserAsync(User);
 
             var offer = new TuitionOffer
             {
@@ -61,7 +102,8 @@ namespace TutorHubBD.Web.Controllers
                 StudentClass = model.StudentClass,
                 Subject = "General",
                 DaysPerWeek = "Negotiable",
-                GenderPreference = "Any"
+                GenderPreference = "Any",
+                GuardianId = user?.Id
             };
 
             await _service.CreateOfferAsync(offer);

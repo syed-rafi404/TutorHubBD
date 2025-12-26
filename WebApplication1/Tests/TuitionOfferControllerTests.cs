@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,12 @@ namespace TutorHubBD.Web.Tests
 {
     public class TuitionOfferControllerTests
     {
+        private Mock<UserManager<ApplicationUser>> GetMockUserManager()
+        {
+            var store = new Mock<IUserStore<ApplicationUser>>();
+            return new Mock<UserManager<ApplicationUser>>(store.Object, null, null, null, null, null, null, null, null);
+        }
+
         [Fact]
         public async Task Index_ReturnsViewResult_WithListOfOffers()
         {
@@ -22,7 +29,8 @@ namespace TutorHubBD.Web.Tests
             var mockService = new Mock<ITuitionOfferService>();
             mockService.Setup(service => service.SearchOffersAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new List<TuitionOffer>());
-            var controller = new TuitionOfferController(mockService.Object, null, null);
+            var mockUserManager = GetMockUserManager();
+            var controller = new TuitionOfferController(mockService.Object, null, null, mockUserManager.Object);
 
             // Act
             var result = await controller.Index(null, null, null);
@@ -37,7 +45,10 @@ namespace TutorHubBD.Web.Tests
         {
             // Arrange
             var mockService = new Mock<ITuitionOfferService>();
-            var controller = new TuitionOfferController(mockService.Object, null, null);
+            var mockUserManager = GetMockUserManager();
+            mockUserManager.Setup(m => m.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
+                .ReturnsAsync(new ApplicationUser { Id = "test-user-id" });
+            var controller = new TuitionOfferController(mockService.Object, null, null, mockUserManager.Object);
             var viewModel = new TuitionOfferCreateViewModel
             {
                 Title = "Test Title",
@@ -63,7 +74,8 @@ namespace TutorHubBD.Web.Tests
         {
             // Arrange
             var mockService = new Mock<ITuitionOfferService>();
-            var controller = new TuitionOfferController(mockService.Object, null, null);
+            var mockUserManager = GetMockUserManager();
+            var controller = new TuitionOfferController(mockService.Object, null, null, mockUserManager.Object);
             controller.ModelState.AddModelError("Title", "Required");
             var viewModel = new TuitionOfferCreateViewModel();
 
@@ -110,8 +122,9 @@ namespace TutorHubBD.Web.Tests
             {
                 var mockService = new Mock<ITuitionOfferService>();
                 var mockCommissionService = new Mock<ICommissionService>();
+                var mockUserManager = GetMockUserManager();
                 
-                var controller = new TuitionOfferController(mockService.Object, context, mockCommissionService.Object);
+                var controller = new TuitionOfferController(mockService.Object, context, mockCommissionService.Object, mockUserManager.Object);
                 // Mock TempData
                 controller.TempData = new Mock<ITempDataDictionary>().Object;
 

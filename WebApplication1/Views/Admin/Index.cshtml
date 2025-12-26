@@ -7,6 +7,14 @@
 <div class="container mt-4">
     <h1 class="mb-4">Admin Dashboard</h1>
 
+    @if (TempData["StatusMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["StatusMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card text-white bg-primary mb-3">
@@ -35,6 +43,89 @@
     </div>
 
     <div class="row">
+        <!-- Pending Verifications Section -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-shield-check me-2"></i>Pending Verification Requests
+                        @if (Model.PendingVerifications.Any())
+                        {
+                            <span class="badge bg-light text-dark ms-2">@Model.PendingVerifications.Count</span>
+                        }
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.PendingVerifications.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Tutor ID</th>
+                                        <th>Tutor Name</th>
+                                        <th>Email</th>
+                                        <th>Education</th>
+                                        <th>Request Date</th>
+                                        <th>Document</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var tutor in Model.PendingVerifications)
+                                    {
+                                        <tr>
+                                            <td>@tutor.TutorID</td>
+                                            <td>
+                                                @if (tutor.User != null)
+                                                {
+                                                    @(tutor.User.FullName ?? tutor.User.UserName)
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Unknown</span>
+                                                }
+                                            </td>
+                                            <td>@tutor.User?.Email</td>
+                                            <td>@tutor.Education</td>
+                                            <td>@tutor.VerificationRequestDate?.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(tutor.VerificationDocumentPath))
+                                                {
+                                                    <a href="@tutor.VerificationDocumentPath" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-file-earmark-text"></i> View
+                                                    </a>
+                                                }
+                                            </td>
+                                            <td>
+                                                <form asp-action="VerifyTutor" asp-route-tutorId="@tutor.TutorID" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                        <i class="bi bi-check-lg"></i> Approve
+                                                    </button>
+                                                </form>
+                                                <form asp-action="RejectVerification" asp-route-tutorId="@tutor.TutorID" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to reject this verification request?')">
+                                                        <i class="bi bi-x-lg"></i> Reject
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No pending verification requests.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Unpaid Commissions Section -->
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-warning text-dark">

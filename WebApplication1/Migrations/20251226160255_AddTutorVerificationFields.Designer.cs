@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TutorHubBD.Web.Data;
 
@@ -11,9 +12,11 @@ using TutorHubBD.Web.Data;
 namespace TutorHubBD.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251226160255_AddTutorVerificationFields")]
+    partial class AddTutorVerificationFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -265,45 +268,6 @@ namespace TutorHubBD.Web.Migrations
                     b.ToTable("CommissionInvoices");
                 });
 
-            modelBuilder.Entity("TutorHubBD.Web.Models.Review", b =>
-                {
-                    b.Property<int>("ReviewId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewId"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("JobId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ReviewerId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int?>("TutorId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ReviewId");
-
-                    b.HasIndex("JobId");
-
-                    b.HasIndex("ReviewerId");
-
-                    b.HasIndex("TutorId");
-
-                    b.ToTable("Reviews");
-                });
-
             modelBuilder.Entity("TutorHubBD.Web.Models.TuitionOffer", b =>
                 {
                     b.Property<int>("Id")
@@ -330,9 +294,6 @@ namespace TutorHubBD.Web.Migrations
                     b.Property<string>("GenderPreference")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GuardianId")
-                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("HiredTutorId")
                         .HasColumnType("int");
@@ -364,8 +325,6 @@ namespace TutorHubBD.Web.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GuardianId");
 
                     b.HasIndex("HiredTutorId");
 
@@ -523,44 +482,12 @@ namespace TutorHubBD.Web.Migrations
                     b.Navigation("Tutor");
                 });
 
-            modelBuilder.Entity("TutorHubBD.Web.Models.Review", b =>
-                {
-                    b.HasOne("TutorHubBD.Web.Models.TuitionOffer", "Job")
-                        .WithMany()
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TutorHubBD.Web.Models.ApplicationUser", "Reviewer")
-                        .WithMany()
-                        .HasForeignKey("ReviewerId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("TutorHubBD.Web.Models.Tutor", "Tutor")
-                        .WithMany()
-                        .HasForeignKey("TutorId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Job");
-
-                    b.Navigation("Reviewer");
-
-                    b.Navigation("Tutor");
-                });
-
             modelBuilder.Entity("TutorHubBD.Web.Models.TuitionOffer", b =>
                 {
-                    b.HasOne("TutorHubBD.Web.Models.ApplicationUser", "Guardian")
-                        .WithMany()
-                        .HasForeignKey("GuardianId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("TutorHubBD.Web.Models.Tutor", "HiredTutor")
                         .WithMany()
                         .HasForeignKey("HiredTutorId")
                         .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Guardian");
 
                     b.Navigation("HiredTutor");
                 });

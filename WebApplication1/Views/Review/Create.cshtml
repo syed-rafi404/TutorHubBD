@@ -1,0 +1,97 @@
+@model TutorHubBD.Web.Models.ViewModels.ReviewCreateViewModel
+
+@{
+    ViewData["Title"] = "Rate Tutor";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-star-fill me-2"></i>Rate Your Tutor
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <p class="mb-1"><strong>Job:</strong> @Model.JobTitle</p>
+                        <p class="mb-0"><strong>Tutor:</strong> @Model.TutorName</p>
+                    </div>
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="JobId" />
+                        <input type="hidden" asp-for="TutorId" />
+                        <input type="hidden" asp-for="JobTitle" />
+                        <input type="hidden" asp-for="TutorName" />
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-4">
+                            <label asp-for="Rating" class="form-label fw-bold">How would you rate this tutor?</label>
+                            <div class="star-rating mb-2">
+                                @for (int i = 5; i >= 1; i--)
+                                {
+                                    <input type="radio" id="star@(i)" name="Rating" value="@i" class="d-none" />
+                                    <label for="star@(i)" class="star-label" title="@i stars">
+                                        <i class="bi bi-star-fill"></i>
+                                    </label>
+                                }
+                            </div>
+                            <span asp-validation-for="Rating" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Comment" class="form-label fw-bold">Your Review (Optional)</label>
+                            <textarea asp-for="Comment" class="form-control" rows="4" 
+                                      placeholder="Share your experience with this tutor..."></textarea>
+                            <span asp-validation-for="Comment" class="text-danger small"></span>
+                            <small class="text-muted">Maximum 500 characters</small>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-success flex-grow-1">
+                                <i class="bi bi-check-lg me-2"></i>Submit Review
+                            </button>
+                            <a asp-controller="TuitionOffer" asp-action="MyJobs" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        font-size: 2rem;
+    }
+
+    .star-label {
+        color: #ddd;
+        cursor: pointer;
+        transition: color 0.2s;
+        padding: 0 2px;
+    }
+
+    .star-label:hover,
+    .star-label:hover ~ .star-label,
+    input[type="radio"]:checked ~ .star-label {
+        color: #ffc107;
+    }
+
+    .star-rating input[type="radio"]:checked + .star-label,
+    .star-rating input[type="radio"]:checked + .star-label ~ .star-label {
+        color: #ffc107;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

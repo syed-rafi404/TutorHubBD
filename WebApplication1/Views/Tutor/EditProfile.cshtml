@@ -1,0 +1,165 @@
+@model TutorHubBD.Web.Models.ViewModels.TutorProfileViewModel
+
+@{
+    ViewData["Title"] = "Edit Tutor Profile";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            @if (TempData["StatusMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["StatusMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <!-- Tutor Profile Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>Tutor Profile
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditProfile" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="TutorID" />
+                        
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Education" class="form-label">Education</label>
+                            <input asp-for="Education" class="form-control" placeholder="e.g., BSc in Computer Science, University of Dhaka" />
+                            <span asp-validation-for="Education" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Subjects" class="form-label">Subjects You Teach</label>
+                            <input asp-for="Subjects" class="form-control" placeholder="e.g., Mathematics, Physics, English" />
+                            <span asp-validation-for="Subjects" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <div class="form-control-plaintext">
+                                @if (Model.Rating > 0)
+                                {
+                                    <span class="text-warning">
+                                        @for (int i = 0; i < (int)Model.Rating; i++)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        @if (Model.Rating % 1 >= 0.5)
+                                        {
+                                            <i class="bi bi-star-half"></i>
+                                        }
+                                    </span>
+                                    <span class="ms-2">(@Model.Rating.ToString("F1"))</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No ratings yet</span>
+                                }
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Verification Status Card -->
+            <div class="card">
+                <div class="card-header @(Model.IsVerified ? "bg-success" : "bg-warning") text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-shield-check me-2"></i>Verification Status
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (Model.IsVerified)
+                    {
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <strong>Verified!</strong> Your profile has been verified by the admin.
+                        </div>
+                    }
+                    else if (Model.HasPendingVerification)
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-clock-history me-2"></i>
+                            <strong>Pending Verification</strong>
+                            <p class="mb-0 mt-2">
+                                Your verification request is under review. 
+                                <br />
+                                <small class="text-muted">
+                                    Submitted on: @Model.VerificationRequestDate?.ToString("MMMM dd, yyyy hh:mm tt")
+                                </small>
+                            </p>
+                        </div>
+                        
+                        <p class="text-muted">You can upload a new document to replace your current submission:</p>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Not Verified</strong>
+                            <p class="mb-0 mt-2">
+                                Upload your verification document (ID card, certificate, etc.) to get verified.
+                                Verified tutors get more visibility and trust from students.
+                            </p>
+                        </div>
+                    }
+
+                    @if (!Model.IsVerified)
+                    {
+                        <hr />
+                        <h5>Upload Verification Document</h5>
+                        <p class="text-muted small">
+                            Accepted formats: PDF, JPG, PNG, DOC, DOCX (Max 5MB)
+                            <br />
+                            Please upload a valid ID (NID, Passport, Student ID) or educational certificate.
+                        </p>
+                        
+                        <form asp-action="UploadVerification" method="post" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            
+                            <div class="mb-3">
+                                <input type="file" class="form-control" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required />
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-upload me-2"></i>Upload Document
+                            </button>
+                        </form>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.VerificationDocumentPath))
+                    {
+                        <hr />
+                        <p class="mb-2"><strong>Current Document:</strong></p>
+                        <a href="@Model.VerificationDocumentPath" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-file-earmark me-2"></i>View Uploaded Document
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -12,6 +12,10 @@ namespace TutorHubBD.Web.Models
         public float Rating { get; set; }
         public bool IsVerified { get; set; }
         
+        // Verification properties
+        public string? VerificationDocumentPath { get; set; }
+        public DateTime? VerificationRequestDate { get; set; }
+        
         public string UserId { get; set; }
         [ForeignKey("UserId")]
         public ApplicationUser User { get; set; }
