@@ -15,6 +15,7 @@ namespace TutorHubBD.Web.Data
         public DbSet<Tutor> Tutors { get; set; }
         public DbSet<TuitionOffer> TuitionOffers { get; set; }
         public DbSet<TuitionRequest> TuitionRequests { get; set; }
+        public DbSet<CommissionInvoice> CommissionInvoices { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -47,6 +48,19 @@ namespace TutorHubBD.Web.Data
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure CommissionInvoice relationships
+            modelBuilder.Entity<CommissionInvoice>()
+                .HasOne(ci => ci.Tutor)
+                .WithMany()
+                .HasForeignKey(ci => ci.TutorId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent deleting tutor if invoice exists
+
+            modelBuilder.Entity<CommissionInvoice>()
+                .HasOne(ci => ci.Job)
+                .WithMany()
+                .HasForeignKey(ci => ci.JobId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent deleting job if invoice exists
         }
     }
 }

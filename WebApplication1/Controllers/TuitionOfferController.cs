@@ -13,11 +13,13 @@ namespace TutorHubBD.Web.Controllers
     {
         private readonly ITuitionOfferService _service;
         private readonly ApplicationDbContext _context;
+        private readonly ICommissionService _commissionService;
 
-        public TuitionOfferController(ITuitionOfferService service, ApplicationDbContext context)
+        public TuitionOfferController(ITuitionOfferService service, ApplicationDbContext context, ICommissionService commissionService)
         {
             _service = service;
             _context = context;
+            _commissionService = commissionService;
         }
 
         // GET: TuitionOffer/Index
@@ -112,6 +114,7 @@ namespace TutorHubBD.Web.Controllers
 
                 _context.TuitionOffers.Update(job);
                 await _context.SaveChangesAsync();
+                await _commissionService.CreateInvoiceAsync(job.Id, job.Salary);
 
                 TempData["SuccessMessage"] = "Tutor hired successfully! The job is now marked as Filled.";
             }

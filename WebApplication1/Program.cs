@@ -29,6 +29,7 @@ builder.Services.AddRazorPages();
 // Register application services
 builder.Services.AddScoped<ITuitionOfferService, TuitionOfferService>();
 builder.Services.AddScoped<TuitionRequestService>();
+builder.Services.AddScoped<ICommissionService, CommissionService>();
 
 var app = builder.Build();
 
