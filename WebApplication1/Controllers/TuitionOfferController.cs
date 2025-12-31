@@ -71,6 +71,65 @@ namespace TutorHubBD.Web.Controllers
             return View(myJobs);
         }
 
+        // GET: TuitionOffer/ViewApplicants/5 - Guardian views all applicants for a specific job
+        [Authorize(Roles = "Guardian")]
+        public async Task<IActionResult> ViewApplicants(int jobId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // Get the job and verify ownership
+            var job = await _context.TuitionOffers
+                .FirstOrDefaultAsync(j => j.Id == jobId);
+
+            if (job == null)
+            {
+                return NotFound();
+            }
+
+            // Security: Verify the current user owns this job
+            if (job.GuardianId != user.Id)
+            {
+                return Forbid();
+            }
+
+            // Get all applicants for this job
+            var applicants = await _context.TuitionRequests
+                .Include(tr => tr.Tutor)
+                    .ThenInclude(t => t.User)
+                .Where(tr => tr.TuitionOfferId == jobId && tr.TutorId != null)
+                .Select(tr => new ApplicantDetail
+                {
+                    TutorId = tr.TutorId ?? 0,
+                    RequestId = tr.RequestID,
+                    Name = tr.Tutor != null && tr.Tutor.User != null 
+                        ? tr.Tutor.User.FullName 
+                        : tr.StudentName,
+                    ProfilePictureUrl = tr.Tutor != null && tr.Tutor.User != null 
+                        ? tr.Tutor.User.ProfilePictureUrl 
+                        : null,
+                    Experience = tr.Tutor != null ? tr.Tutor.Experience : null,
+                    Subjects = tr.Tutor != null ? tr.Tutor.Subjects : null,
+                    Education = tr.Tutor != null ? tr.Tutor.Education : null,
+                    Status = tr.Status,
+                    IsVerified = tr.Tutor != null && tr.Tutor.IsVerified
+                })
+                .ToListAsync();
+
+            var viewModel = new JobApplicantsViewModel
+            {
+                JobId = job.Id,
+                JobTitle = job.Title,
+                JobStatus = job.Status,
+                Applicants = applicants
+            };
+
+            return View(viewModel);
+        }
+
         // GET: TuitionOffer/Create - Only Guardians can create jobs
         [Authorize(Roles = "Guardian")]
         public IActionResult Create()

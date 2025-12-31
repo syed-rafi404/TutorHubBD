@@ -1,0 +1,255 @@
+@model TutorHubBD.Web.Models.ViewModels.JobApplicantsViewModel
+
+@{
+    ViewData["Title"] = "Job Applicants";
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="MyJobs">My Jobs</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Applicants</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">@Model.JobTitle</h2>
+            <span class="badge @(Model.JobStatus == TutorHubBD.Web.Models.JobStatus.Open ? "bg-success" : Model.JobStatus == TutorHubBD.Web.Models.JobStatus.Filled ? "bg-primary" : "bg-secondary")">
+                @Model.JobStatus
+            </span>
+        </div>
+        <a asp-action="MyJobs" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to My Jobs
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model.Applicants.Count == 0)
+    {
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 text-muted">No Applicants Yet</h5>
+                <p class="text-muted">When teachers apply for this job, they will appear here.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-people-fill me-2"></i>
+                    @Model.Applicants.Count Applicant(s)
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- Desktop Table View -->
+                <div class="table-responsive d-none d-md-block">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" style="width: 50px;"></th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Subjects</th>
+                                <th scope="col">Experience</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var applicant in Model.Applicants)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="position-relative">
+                                            @if (!string.IsNullOrEmpty(applicant.ProfilePictureUrl))
+                                            {
+                                                <img src="@applicant.ProfilePictureUrl" 
+                                                     alt="@applicant.Name" 
+                                                     class="rounded-circle" 
+                                                     style="width: 45px; height: 45px; object-fit: cover;">
+                                            }
+                                            else
+                                            {
+                                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" 
+                                                     style="width: 45px; height: 45px; font-size: 1.2rem;">
+                                                    @(applicant.Name.Length > 0 ? applicant.Name[0].ToString().ToUpper() : "?")
+                                                </div>
+                                            }
+                                            @if (applicant.IsVerified)
+                                            {
+                                                <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" 
+                                                      style="width: 16px; height: 16px;" 
+                                                      title="Verified Tutor">
+                                                    <i class="bi bi-check text-white" style="font-size: 0.6rem;"></i>
+                                                </span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div>
+                                            <strong>@applicant.Name</strong>
+                                            @if (applicant.IsVerified)
+                                            {
+                                                <span class="badge bg-success ms-1" style="font-size: 0.65rem;">Verified</span>
+                                            }
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(applicant.Education))
+                                        {
+                                            <small class="text-muted">@applicant.Education</small>
+                                        }
+                                    </td>
+                                    <td class="align-middle">
+                                        @if (!string.IsNullOrEmpty(applicant.Subjects))
+                                        {
+                                            <span class="text-truncate d-inline-block" style="max-width: 200px;" title="@applicant.Subjects">
+                                                @applicant.Subjects
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td class="align-middle">
+                                        @if (applicant.Experience.HasValue)
+                                        {
+                                            <span>@applicant.Experience year(s)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="badge @(applicant.Status == "Accepted" ? "bg-success" : applicant.Status == "Rejected" ? "bg-danger" : applicant.Status == "Shortlisted" ? "bg-info" : "bg-warning text-dark")">
+                                            @applicant.Status
+                                        </span>
+                                    </td>
+                                    <td class="align-middle text-end">
+                                        @if (Model.JobStatus == TutorHubBD.Web.Models.JobStatus.Open && applicant.TutorId > 0)
+                                        {
+                                            <form asp-action="ConfirmHiring" method="post" class="d-inline" 
+                                                  onsubmit="return confirm('Are you sure you want to hire this tutor? This will mark the job as Filled.');">
+                                                <input type="hidden" name="jobId" value="@Model.JobId" />
+                                                <input type="hidden" name="tutorId" value="@applicant.TutorId" />
+                                                <button type="submit" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-check-circle me-1"></i> Hire
+                                                </button>
+                                            </form>
+                                        }
+                                        else if (Model.JobStatus == TutorHubBD.Web.Models.JobStatus.Filled)
+                                        {
+                                            <span class="text-muted small">Job Filled</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="d-md-none">
+                    @foreach (var applicant in Model.Applicants)
+                    {
+                        <div class="border-bottom p-3">
+                            <div class="d-flex align-items-start">
+                                <div class="position-relative me-3">
+                                    @if (!string.IsNullOrEmpty(applicant.ProfilePictureUrl))
+                                    {
+                                        <img src="@applicant.ProfilePictureUrl" 
+                                             alt="@applicant.Name" 
+                                             class="rounded-circle" 
+                                             style="width: 60px; height: 60px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" 
+                                             style="width: 60px; height: 60px; font-size: 1.5rem;">
+                                            @(applicant.Name.Length > 0 ? applicant.Name[0].ToString().ToUpper() : "?")
+                                        </div>
+                                    }
+                                    @if (applicant.IsVerified)
+                                    {
+                                        <span class="position-absolute bottom-0 end-0 bg-success rounded-circle p-1" 
+                                              style="width: 20px; height: 20px;" 
+                                              title="Verified Tutor">
+                                            <i class="bi bi-check text-white"></i>
+                                        </span>
+                                    }
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                @applicant.Name
+                                                @if (applicant.IsVerified)
+                                                {
+                                                    <span class="badge bg-success ms-1" style="font-size: 0.65rem;">Verified</span>
+                                                }
+                                            </h6>
+                                            <span class="badge @(applicant.Status == "Accepted" ? "bg-success" : applicant.Status == "Rejected" ? "bg-danger" : applicant.Status == "Shortlisted" ? "bg-info" : "bg-warning text-dark")">
+                                                @applicant.Status
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-2 small text-muted">
+                                        @if (!string.IsNullOrEmpty(applicant.Education))
+                                        {
+                                            <div><i class="bi bi-mortarboard me-1"></i> @applicant.Education</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(applicant.Subjects))
+                                        {
+                                            <div><i class="bi bi-book me-1"></i> @applicant.Subjects</div>
+                                        }
+                                        @if (applicant.Experience.HasValue)
+                                        {
+                                            <div><i class="bi bi-briefcase me-1"></i> @applicant.Experience year(s) experience</div>
+                                        }
+                                    </div>
+
+                                    @if (Model.JobStatus == TutorHubBD.Web.Models.JobStatus.Open && applicant.TutorId > 0)
+                                    {
+                                        <form asp-action="ConfirmHiring" method="post" class="mt-2" 
+                                              onsubmit="return confirm('Are you sure you want to hire this tutor? This will mark the job as Filled.');">
+                                            <input type="hidden" name="jobId" value="@Model.JobId" />
+                                            <input type="hidden" name="tutorId" value="@applicant.TutorId" />
+                                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                <i class="bi bi-check-circle me-1"></i> Hire This Tutor
+                                            </button>
+                                        </form>
+                                    }
+                                    else if (Model.JobStatus == TutorHubBD.Web.Models.JobStatus.Filled)
+                                    {
+                                        <div class="mt-2 text-muted small">
+                                            <i class="bi bi-info-circle me-1"></i> Job already filled
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

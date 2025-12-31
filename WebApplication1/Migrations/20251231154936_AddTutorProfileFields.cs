@@ -8,7 +8,7 @@ namespace TutorHubBD.Web.Migrations
     public partial class AddTutorProfileFields : Migration
     {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)sss
+        protected override void Up(MigrationBuilder migrationBuilder)
         {
 
         }

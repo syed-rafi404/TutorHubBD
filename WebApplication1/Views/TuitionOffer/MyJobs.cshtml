@@ -92,6 +92,12 @@
                                     <a asp-controller="TuitionRequest" asp-action="Index" class="btn btn-outline-primary w-100 mb-2">
                                         <i class="bi bi-people me-2"></i>View Applications
                                     </a>
+                                    
+                                    <!-- View Applicants Button -->
+                                    <a asp-controller="TuitionOffer" asp-action="ViewApplicants" asp-route-jobId="@job.Id" 
+                                       class="btn btn-info w-100 mb-2">
+                                        <i class="bi bi-person-lines-fill me-2"></i>View Applicants
+                                    </a>
                                 }
 
                                 <!-- Delete Button -->
