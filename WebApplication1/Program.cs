@@ -33,6 +33,22 @@ builder.Services.AddScoped<ICommissionService, CommissionService>();
 
 var app = builder.Build();
 
+// Seed roles at application startup
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    
+    string[] roles = { "Admin", "Guardian", "Teacher" };
+    
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

@@ -10,7 +10,6 @@ using TutorHubBD.Web.Services;
 
 namespace TutorHubBD.Web.Controllers
 {
-    [AllowAnonymous]
     public class TuitionOfferController : Controller
     {
         private readonly ITuitionOfferService _service;
@@ -30,7 +29,8 @@ namespace TutorHubBD.Web.Controllers
             _userManager = userManager;
         }
 
-        // GET: TuitionOffer/Index
+        // GET: TuitionOffer/Index - Both Guardians and Teachers can view jobs
+        [Authorize(Roles = "Guardian, Teacher")]
         public async Task<IActionResult> Index(string searchCity, string searchMedium, string searchClass)
         {
             var jobs = await _service.SearchOffersAsync(searchCity, searchMedium, searchClass);
@@ -43,7 +43,7 @@ namespace TutorHubBD.Web.Controllers
         }
 
         // GET: TuitionOffer/MyJobs - Shows jobs posted by the current Guardian
-        [Authorize]
+        [Authorize(Roles = "Guardian")]
         public async Task<IActionResult> MyJobs()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -71,16 +71,16 @@ namespace TutorHubBD.Web.Controllers
             return View(myJobs);
         }
 
-        // GET: TuitionOffer/Create
-        [Authorize]
+        // GET: TuitionOffer/Create - Only Guardians can create jobs
+        [Authorize(Roles = "Guardian")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: TuitionOffer/Create
+        // POST: TuitionOffer/Create - Only Guardians can create jobs
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Guardian")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(TuitionOfferCreateViewModel model)
         {
@@ -110,18 +110,19 @@ namespace TutorHubBD.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: TuitionOffer/Delete/5
+        // POST: TuitionOffer/Delete/5 - Only Guardians can delete jobs
         [HttpPost, ActionName("Delete")]
+        [Authorize(Roles = "Guardian")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             await _service.DeleteOfferAsync(id);
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(MyJobs));
         }
 
-        // POST: TuitionOffer/ConfirmHiring
+        // POST: TuitionOffer/ConfirmHiring - Only Guardians can hire tutors
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Guardian")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmHiring(int jobId, int tutorId)
         {

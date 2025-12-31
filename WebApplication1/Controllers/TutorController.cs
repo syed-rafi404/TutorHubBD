@@ -47,7 +47,9 @@ namespace TutorHubBD.Web.Controllers
                     Education = "",
                     Subjects = "",
                     Rating = 0,
-                    IsVerified = false
+                    IsVerified = false,
+                    Experience = null,
+                    PreferredLocations = ""
                 };
                 _context.Tutors.Add(tutor);
                 await _context.SaveChangesAsync();
@@ -58,6 +60,8 @@ namespace TutorHubBD.Web.Controllers
                 TutorID = tutor.TutorID,
                 Education = tutor.Education,
                 Subjects = tutor.Subjects,
+                Experience = tutor.Experience,
+                PreferredLocations = tutor.PreferredLocations,
                 Rating = tutor.Rating,
                 IsVerified = tutor.IsVerified,
                 VerificationDocumentPath = tutor.VerificationDocumentPath,
@@ -91,8 +95,10 @@ namespace TutorHubBD.Web.Controllers
                 return NotFound("Tutor profile not found.");
             }
 
-            tutor.Education = model.Education;
-            tutor.Subjects = model.Subjects;
+            tutor.Education = model.Education ?? "";
+            tutor.Subjects = model.Subjects ?? "";
+            tutor.Experience = model.Experience;
+            tutor.PreferredLocations = model.PreferredLocations ?? "";
 
             _context.Update(tutor);
             await _context.SaveChangesAsync();

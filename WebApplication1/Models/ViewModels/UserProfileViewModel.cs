@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace TutorHubBD.Web.Models.ViewModels
 {
@@ -8,15 +9,20 @@ namespace TutorHubBD.Web.Models.ViewModels
         [Display(Name = "Full Name")]
         public string FullName { get; set; }
 
-        [Required(ErrorMessage = "Phone Number is required")]
         [Phone(ErrorMessage = "Invalid Phone Number")]
         [Display(Name = "Phone Number")]
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [Display(Name = "Address")]
-        public string Address { get; set; }
+        public string? Address { get; set; }
 
         [Display(Name = "Bio")]
-        public string Bio { get; set; }
+        public string? Bio { get; set; }
+
+        // Profile Picture
+        [Display(Name = "Profile Picture")]
+        public IFormFile? ProfilePicture { get; set; }
+
+        public string? ProfilePictureUrl { get; set; }
     }
 }

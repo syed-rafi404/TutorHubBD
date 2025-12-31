@@ -20,8 +20,39 @@
                     </div>
                 }
 
-                <form method="post" asp-action="Profile">
+                <!-- Profile Picture Display -->
+                <div class="text-center mb-4">
+                    <div class="position-relative d-inline-block">
+                        @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                        {
+                            <img src="@Model.ProfilePictureUrl" alt="Profile Picture" 
+                                 class="rounded-circle border border-3 border-light shadow" 
+                                 style="width: 150px; height: 150px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center border border-3 border-light shadow"
+                                 style="width: 150px; height: 150px;">
+                                <i class="bi bi-person-fill text-white" style="font-size: 4rem;"></i>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <form method="post" asp-action="Profile" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <!-- Profile Picture Upload -->
+                    <div class="mb-3">
+                        <label asp-for="ProfilePicture" class="form-label text-white">
+                            <i class="bi bi-camera me-2"></i>Change Profile Picture
+                        </label>
+                        <input asp-for="ProfilePicture" type="file" class="form-control" accept=".jpg,.jpeg,.png,.gif" />
+                        <span asp-validation-for="ProfilePicture" class="text-danger small"></span>
+                        <small class="text-white-50">Accepted formats: JPG, PNG, GIF (Max 2MB)</small>
+                    </div>
+
+                    <hr class="my-4 border-light" />
 
                     <div class="form-floating mb-3">
                         <input asp-for="FullName" class="form-control" placeholder="Full Name" />
@@ -48,7 +79,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-gradient w-100 py-3">
-                        Save Changes
+                        <i class="bi bi-save me-2"></i>Save Changes
                     </button>
                 </form>
             </div>

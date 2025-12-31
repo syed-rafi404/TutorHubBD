@@ -38,39 +38,64 @@
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                         <div class="mb-3">
-                            <label asp-for="Education" class="form-label">Education</label>
+                            <label asp-for="Education" class="form-label">
+                                <i class="bi bi-mortarboard me-1"></i>Education
+                            </label>
                             <input asp-for="Education" class="form-control" placeholder="e.g., BSc in Computer Science, University of Dhaka" />
                             <span asp-validation-for="Education" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Subjects" class="form-label">Subjects You Teach</label>
+                            <label asp-for="Subjects" class="form-label">
+                                <i class="bi bi-book me-1"></i>Subjects You Teach
+                            </label>
                             <input asp-for="Subjects" class="form-control" placeholder="e.g., Mathematics, Physics, English" />
                             <span asp-validation-for="Subjects" class="text-danger small"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Rating</label>
-                            <div class="form-control-plaintext">
-                                @if (Model.Rating > 0)
-                                {
-                                    <span class="text-warning">
-                                        @for (int i = 0; i < (int)Model.Rating; i++)
-                                        {
-                                            <i class="bi bi-star-fill"></i>
-                                        }
-                                        @if (Model.Rating % 1 >= 0.5)
-                                        {
-                                            <i class="bi bi-star-half"></i>
-                                        }
-                                    </span>
-                                    <span class="ms-2">(@Model.Rating.ToString("F1"))</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No ratings yet</span>
-                                }
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Experience" class="form-label">
+                                    <i class="bi bi-briefcase me-1"></i>Years of Experience
+                                </label>
+                                <input asp-for="Experience" type="number" class="form-control" min="0" max="50" placeholder="e.g., 5" />
+                                <span asp-validation-for="Experience" class="text-danger small"></span>
                             </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-star me-1"></i>Rating
+                                </label>
+                                <div class="form-control-plaintext">
+                                    @if (Model.Rating > 0)
+                                    {
+                                        <span class="text-warning">
+                                            @for (int i = 0; i < (int)Model.Rating; i++)
+                                            {
+                                                <i class="bi bi-star-fill"></i>
+                                            }
+                                            @if (Model.Rating % 1 >= 0.5)
+                                            {
+                                                <i class="bi bi-star-half"></i>
+                                            }
+                                        </span>
+                                        <span class="ms-2">(@Model.Rating.ToString("F1"))</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No ratings yet</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PreferredLocations" class="form-label">
+                                <i class="bi bi-geo-alt me-1"></i>Preferred Locations
+                            </label>
+                            <input asp-for="PreferredLocations" class="form-control" placeholder="e.g., Dhaka, Chittagong, Online" />
+                            <small class="text-muted">Enter locations separated by commas where you prefer to teach</small>
+                            <span asp-validation-for="PreferredLocations" class="text-danger small"></span>
                         </div>
 
                         <button type="submit" class="btn btn-primary">

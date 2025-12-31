@@ -14,5 +14,8 @@ namespace TutorHubBD.Web.Models
 
         [PersonalData]
         public string Bio { get; set; }
+
+        [PersonalData]
+        public string? ProfilePictureUrl { get; set; }
     }
 }

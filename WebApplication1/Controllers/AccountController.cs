@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TutorHubBD.Web.Models;
 using TutorHubBD.Web.Models.ViewModels;
+using System.IO;
 
 namespace TutorHubBD.Controllers
 {
@@ -11,11 +12,19 @@ namespace TutorHubBD.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        // Allowed roles for registration (Admin excluded)
+        private static readonly string[] AllowedRoles = { "Guardian", "Teacher" };
+
+        public AccountController(
+            UserManager<ApplicationUser> userManager, 
+            SignInManager<ApplicationUser> signInManager,
+            IWebHostEnvironment webHostEnvironment)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         // GET: /Account/Register
@@ -32,6 +41,13 @@ namespace TutorHubBD.Controllers
         {
             if (ModelState.IsValid)
             {
+                // Validate that the role is allowed (only Guardian or Teacher)
+                if (!AllowedRoles.Contains(model.Role))
+                {
+                    ModelState.AddModelError("Role", "Invalid role selected. Please choose Guardian or Teacher.");
+                    return View(model);
+                }
+
                 var user = new ApplicationUser 
                 { 
                     UserName = model.Email, 
@@ -44,6 +60,9 @@ namespace TutorHubBD.Controllers
 
                 if (result.Succeeded)
                 {
+                    // Assign the selected role to the user
+                    await _userManager.AddToRoleAsync(user, model.Role);
+                    
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction("Index", "Home");
                 }
@@ -116,7 +135,8 @@ namespace TutorHubBD.Controllers
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber,
                 Address = user.Address,
-                Bio = user.Bio
+                Bio = user.Bio,
+                ProfilePictureUrl = user.ProfilePictureUrl
             };
 
             return View(model);
@@ -139,10 +159,63 @@ namespace TutorHubBD.Controllers
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
+            // Handle profile picture upload
+            if (model.ProfilePicture != null && model.ProfilePicture.Length > 0)
+            {
+                // Validate file type
+                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                var fileExtension = Path.GetExtension(model.ProfilePicture.FileName).ToLowerInvariant();
+                
+                if (!allowedExtensions.Contains(fileExtension))
+                {
+                    ModelState.AddModelError("ProfilePicture", "Invalid file type. Allowed types: JPG, JPEG, PNG, GIF.");
+                    model.ProfilePictureUrl = user.ProfilePictureUrl;
+                    return View(model);
+                }
+
+                // Validate file size (max 2MB)
+                if (model.ProfilePicture.Length > 2 * 1024 * 1024)
+                {
+                    ModelState.AddModelError("ProfilePicture", "File size must be less than 2MB.");
+                    model.ProfilePictureUrl = user.ProfilePictureUrl;
+                    return View(model);
+                }
+
+                // Create the uploads directory if it doesn't exist
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "profiles");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // Delete old profile picture if exists
+                if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
+                {
+                    var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, user.ProfilePictureUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                // Generate unique filename
+                var uniqueFileName = $"{user.Id}_{DateTime.Now:yyyyMMddHHmmss}{fileExtension}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // Save the file
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await model.ProfilePicture.CopyToAsync(fileStream);
+                }
+
+                // Update user's profile picture URL
+                user.ProfilePictureUrl = $"/uploads/profiles/{uniqueFileName}";
+            }
+
             user.FullName = model.FullName;
             user.PhoneNumber = model.PhoneNumber;
-            user.Address = model.Address;
-            user.Bio = model.Bio;
+            user.Address = model.Address ?? "";
+            user.Bio = model.Bio ?? "";
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
