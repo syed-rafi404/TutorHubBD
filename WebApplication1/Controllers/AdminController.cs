@@ -9,7 +9,7 @@ using TutorHubBD.Web.Models.ViewModels;
 
 namespace TutorHubBD.Web.Controllers
 {
-    ///[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -31,7 +31,6 @@ namespace TutorHubBD.Web.Controllers
                     .ThenInclude(t => t.User)
                     .Where(i => i.Status == InvoiceStatus.Pending)
                     .ToListAsync(),
-                // Get tutors who have uploaded verification documents but are not yet verified
                 PendingVerifications = await _context.Tutors
                     .Include(t => t.User)
                     .Where(t => !t.IsVerified && 
@@ -39,7 +38,6 @@ namespace TutorHubBD.Web.Controllers
                                 t.VerificationRequestDate != null)
                     .OrderByDescending(t => t.VerificationRequestDate)
                     .ToListAsync(),
-                // Recently verified tutors
                 RecentVerifications = await _context.Tutors
                     .Include(t => t.User)
                     .Where(t => t.IsVerified)
@@ -57,9 +55,7 @@ namespace TutorHubBD.Web.Controllers
         {
             var invoice = await _context.CommissionInvoices.FindAsync(id);
             if (invoice == null)
-            {
                 return NotFound();
-            }
 
             invoice.Status = InvoiceStatus.Paid;
             _context.Update(invoice);
@@ -74,9 +70,7 @@ namespace TutorHubBD.Web.Controllers
         {
             var tutor = await _context.Tutors.FindAsync(tutorId);
             if (tutor == null)
-            {
                 return NotFound();
-            }
 
             tutor.IsVerified = true;
             _context.Update(tutor);
@@ -92,11 +86,8 @@ namespace TutorHubBD.Web.Controllers
         {
             var tutor = await _context.Tutors.FindAsync(tutorId);
             if (tutor == null)
-            {
                 return NotFound();
-            }
 
-            // Clear verification request
             tutor.VerificationDocumentPath = null;
             tutor.VerificationRequestDate = null;
             tutor.IsVerified = false;

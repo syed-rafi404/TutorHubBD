@@ -15,21 +15,23 @@ namespace TutorHubBD.Web.Controllers
         private readonly ITuitionOfferService _service;
         private readonly ApplicationDbContext _context;
         private readonly ICommissionService _commissionService;
+        private readonly INotificationService _notificationService;
         private readonly UserManager<ApplicationUser> _userManager;
 
         public TuitionOfferController(
             ITuitionOfferService service, 
             ApplicationDbContext context, 
             ICommissionService commissionService,
+            INotificationService notificationService,
             UserManager<ApplicationUser> userManager)
         {
             _service = service;
             _context = context;
             _commissionService = commissionService;
+            _notificationService = notificationService;
             _userManager = userManager;
         }
 
-        // GET: TuitionOffer/Index - Both Guardians and Teachers can view jobs
         [Authorize(Roles = "Guardian, Teacher")]
         public async Task<IActionResult> Index(string searchCity, string searchMedium, string searchClass)
         {
@@ -42,15 +44,12 @@ namespace TutorHubBD.Web.Controllers
             return View(jobs);
         }
 
-        // GET: TuitionOffer/MyJobs - Shows jobs posted by the current Guardian
         [Authorize(Roles = "Guardian")]
         public async Task<IActionResult> MyJobs()
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
-            {
                 return RedirectToAction("Login", "Account");
-            }
 
             var myJobs = await _context.TuitionOffers
                 .Include(j => j.HiredTutor)
@@ -59,7 +58,6 @@ namespace TutorHubBD.Web.Controllers
                 .OrderByDescending(j => j.CreatedAt)
                 .ToListAsync();
 
-            // Get review status for each job
             var jobIds = myJobs.Select(j => j.Id).ToList();
             var reviewedJobIds = await _context.Reviews
                 .Where(r => jobIds.Contains(r.JobId))
@@ -71,32 +69,22 @@ namespace TutorHubBD.Web.Controllers
             return View(myJobs);
         }
 
-        // GET: TuitionOffer/ViewApplicants/5 - Guardian views all applicants for a specific job
         [Authorize(Roles = "Guardian")]
         public async Task<IActionResult> ViewApplicants(int jobId)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
-            {
                 return RedirectToAction("Login", "Account");
-            }
 
-            // Get the job and verify ownership
             var job = await _context.TuitionOffers
                 .FirstOrDefaultAsync(j => j.Id == jobId);
 
             if (job == null)
-            {
                 return NotFound();
-            }
 
-            // Security: Verify the current user owns this job
             if (job.GuardianId != user.Id)
-            {
                 return Forbid();
-            }
 
-            // Get all applicants for this job
             var applicants = await _context.TuitionRequests
                 .Include(tr => tr.Tutor)
                     .ThenInclude(t => t.User)
@@ -130,23 +118,19 @@ namespace TutorHubBD.Web.Controllers
             return View(viewModel);
         }
 
-        // GET: TuitionOffer/Create - Only Guardians can create jobs
         [Authorize(Roles = "Guardian")]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: TuitionOffer/Create - Only Guardians can create jobs
         [HttpPost]
         [Authorize(Roles = "Guardian")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(TuitionOfferCreateViewModel model)
         {
             if (!ModelState.IsValid)
-            {
                 return View(model);
-            }
 
             var user = await _userManager.GetUserAsync(User);
 
@@ -169,7 +153,6 @@ namespace TutorHubBD.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: TuitionOffer/Delete/5 - Only Guardians can delete jobs
         [HttpPost, ActionName("Delete")]
         [Authorize(Roles = "Guardian")]
         [ValidateAntiForgeryToken]
@@ -179,35 +162,33 @@ namespace TutorHubBD.Web.Controllers
             return RedirectToAction(nameof(MyJobs));
         }
 
-        // POST: TuitionOffer/ConfirmHiring - Only Guardians can hire tutors
         [HttpPost]
         [Authorize(Roles = "Guardian")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmHiring(int jobId, int tutorId)
         {
-            var job = await _context.TuitionOffers.FindAsync(jobId);
+            var job = await _context.TuitionOffers
+                .Include(j => j.Guardian)
+                .FirstOrDefaultAsync(j => j.Id == jobId);
+                
             if (job == null)
-            {
                 return NotFound();
-            }
 
-            // Validate that tutorId is valid
             if (tutorId <= 0)
             {
                 TempData["ErrorMessage"] = "Cannot hire: The applicant does not have a valid tutor profile linked to their application.";
                 return RedirectToAction("Index", "TuitionRequest");
             }
 
-            // Verify the tutor exists in the database
-            var tutor = await _context.Tutors.FindAsync(tutorId);
+            var tutor = await _context.Tutors
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.TutorID == tutorId);
+                
             if (tutor == null)
             {
                 TempData["ErrorMessage"] = "Cannot hire: The specified tutor profile does not exist.";
                 return RedirectToAction("Index", "TuitionRequest");
             }
-
-            // In a real scenario, verify that the current user is the owner of the job.
-            // For now, we proceed assuming authorization is handled or simplified.
 
             if (job.Status == JobStatus.Open)
             {
@@ -217,6 +198,103 @@ namespace TutorHubBD.Web.Controllers
                 _context.TuitionOffers.Update(job);
                 await _context.SaveChangesAsync();
                 await _commissionService.CreateInvoiceAsync(job.Id, job.Salary);
+
+                var commissionAmount = job.Salary * 0.40m;
+
+                var tutorUser = await _userManager.FindByIdAsync(tutor.UserId);
+                var tutorEmail = tutorUser?.Email;
+                var tutorName = tutorUser?.FullName ?? tutorUser?.UserName ?? "A tutor";
+                var tutorPhone = tutorUser?.PhoneNumber;
+
+                var guardianName = job.Guardian?.FullName ?? job.Guardian?.UserName ?? "Guardian";
+                var guardianEmail = job.Guardian?.Email;
+
+                // Send notifications to the TUTOR (Teacher)
+                if (!string.IsNullOrEmpty(tutor.UserId))
+                {
+                    await _notificationService.SendInAppNotificationAsync(
+                        tutor.UserId,
+                        "Congratulations! You've Been Hired!",
+                        $"You have been hired for the job: \"{job.Title}\". Salary: ৳{job.Salary}. Please pay the commission of ৳{commissionAmount:F2}.",
+                        "/TuitionRequest/MyApplications"
+                    );
+
+                    if (!string.IsNullOrEmpty(tutorEmail))
+                    {
+                        var tutorEmailBody = $@"
+                            <h2>🎉 Congratulations! You've Been Hired!</h2>
+                            <p>Hello {tutorName},</p>
+                            <p>Great news! <strong>{guardianName}</strong> has hired you for the following tuition job:</p>
+                            <table style='border-collapse: collapse; margin: 20px 0; width: 100%;'>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Job Title:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{job.Title}</td></tr>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Location:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{job.Location}, {job.City}</td></tr>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Monthly Salary:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>৳{job.Salary}</td></tr>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Commission (40%):</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>৳{commissionAmount:F2}</td></tr>
+                            </table>
+                            <p><strong>Next Steps:</strong></p>
+                            <ol>
+                                <li>Contact the guardian to arrange your first session.</li>
+                                <li>Pay the platform commission of ৳{commissionAmount:F2} to complete the process.</li>
+                            </ol>
+                            <p>Log in to TutorHubBD to view your applications and invoices.</p>
+                            <p>Best regards,<br/>TutorHubBD Team</p>
+                        ";
+
+                        await _notificationService.SendEmailAsync(
+                            tutorEmail,
+                            $"🎉 You've Been Hired for \"{job.Title}\" - TutorHubBD",
+                            tutorEmailBody
+                        );
+                    }
+
+                    if (!string.IsNullOrEmpty(tutorPhone))
+                    {
+                        await _notificationService.SendSmsAsync(
+                            tutorPhone,
+                            $"TutorHubBD: Congratulations! You've been hired for \"{job.Title}\". Salary: Tk{job.Salary}. Commission: Tk{commissionAmount:F2}. Login to view details."
+                        );
+                    }
+                }
+
+                // Send notifications to the GUARDIAN (Job Owner)
+                if (!string.IsNullOrEmpty(job.GuardianId))
+                {
+                    await _notificationService.SendInAppNotificationAsync(
+                        job.GuardianId,
+                        "Tutor Hired Successfully!",
+                        $"You have successfully hired {tutorName} for \"{job.Title}\". The job is now marked as Filled.",
+                        "/TuitionOffer/MyJobs"
+                    );
+
+                    if (!string.IsNullOrEmpty(guardianEmail))
+                    {
+                        var guardianEmailBody = $@"
+                            <h2>✅ Tutor Hired Successfully!</h2>
+                            <p>Hello {guardianName},</p>
+                            <p>You have successfully hired a tutor for your job. Here are the details:</p>
+                            <table style='border-collapse: collapse; margin: 20px 0; width: 100%;'>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Job Title:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{job.Title}</td></tr>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Hired Tutor:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{tutorName}</td></tr>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Tutor Email:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{tutorEmail ?? "N/A"}</td></tr>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Tutor Phone:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>{tutorPhone ?? "N/A"}</td></tr>
+                                <tr><td style='padding: 8px; border: 1px solid #ddd;'><strong>Monthly Salary:</strong></td><td style='padding: 8px; border: 1px solid #ddd;'>৳{job.Salary}</td></tr>
+                            </table>
+                            <p><strong>Next Steps:</strong></p>
+                            <ol>
+                                <li>Contact the tutor to arrange the first session.</li>
+                                <li>You can leave a review after the tuition begins.</li>
+                            </ol>
+                            <p>Log in to TutorHubBD to manage your jobs.</p>
+                            <p>Best regards,<br/>TutorHubBD Team</p>
+                        ";
+
+                        await _notificationService.SendEmailAsync(
+                            guardianEmail,
+                            $"✅ Tutor Hired for \"{job.Title}\" - TutorHubBD",
+                            guardianEmailBody
+                        );
+                    }
+                }
 
                 TempData["SuccessMessage"] = "Tutor hired successfully! The job is now marked as Filled.";
             }

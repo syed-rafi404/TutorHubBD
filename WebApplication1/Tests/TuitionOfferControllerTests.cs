@@ -25,30 +25,28 @@ namespace TutorHubBD.Web.Tests
         [Fact]
         public async Task Index_ReturnsViewResult_WithListOfOffers()
         {
-            // Arrange
             var mockService = new Mock<ITuitionOfferService>();
             mockService.Setup(service => service.SearchOffersAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new List<TuitionOffer>());
             var mockUserManager = GetMockUserManager();
-            var controller = new TuitionOfferController(mockService.Object, null, null, mockUserManager.Object);
+            var mockNotificationService = new Mock<INotificationService>();
+            var controller = new TuitionOfferController(mockService.Object, null, null, mockNotificationService.Object, mockUserManager.Object);
 
-            // Act
             var result = await controller.Index(null, null, null);
 
-            // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsAssignableFrom<List<TuitionOffer>>(viewResult.ViewData.Model);
+            Assert.IsAssignableFrom<List<TuitionOffer>>(viewResult.ViewData.Model);
         }
 
         [Fact]
         public async Task Create_Post_ReturnsRedirectToActionResult_WhenModelStateIsValid()
         {
-            // Arrange
             var mockService = new Mock<ITuitionOfferService>();
             var mockUserManager = GetMockUserManager();
+            var mockNotificationService = new Mock<INotificationService>();
             mockUserManager.Setup(m => m.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
                 .ReturnsAsync(new ApplicationUser { Id = "test-user-id" });
-            var controller = new TuitionOfferController(mockService.Object, null, null, mockUserManager.Object);
+            var controller = new TuitionOfferController(mockService.Object, null, null, mockNotificationService.Object, mockUserManager.Object);
             var viewModel = new TuitionOfferCreateViewModel
             {
                 Title = "Test Title",
@@ -60,10 +58,8 @@ namespace TutorHubBD.Web.Tests
                 StudentClass = "Class 10"
             };
 
-            // Act
             var result = await controller.Create(viewModel);
 
-            // Assert
             var redirectToActionResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Index", redirectToActionResult.ActionName);
             mockService.Verify(s => s.CreateOfferAsync(It.IsAny<TuitionOffer>()), Times.Once);
@@ -72,17 +68,15 @@ namespace TutorHubBD.Web.Tests
         [Fact]
         public async Task Create_Post_ReturnsViewResult_WhenModelStateIsInvalid()
         {
-            // Arrange
             var mockService = new Mock<ITuitionOfferService>();
             var mockUserManager = GetMockUserManager();
-            var controller = new TuitionOfferController(mockService.Object, null, null, mockUserManager.Object);
+            var mockNotificationService = new Mock<INotificationService>();
+            var controller = new TuitionOfferController(mockService.Object, null, null, mockNotificationService.Object, mockUserManager.Object);
             controller.ModelState.AddModelError("Title", "Required");
             var viewModel = new TuitionOfferCreateViewModel();
 
-            // Act
             var result = await controller.Create(viewModel);
 
-            // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.Equal(viewModel, viewResult.Model);
             mockService.Verify(s => s.CreateOfferAsync(It.IsAny<TuitionOffer>()), Times.Never);
@@ -91,14 +85,21 @@ namespace TutorHubBD.Web.Tests
         [Fact]
         public async Task ConfirmHiring_CreatesInvoice_WhenJobIsOpen()
         {
-            // Arrange
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(databaseName: "ConfirmHiring_CreatesInvoice")
+                .UseInMemoryDatabase(databaseName: System.Guid.NewGuid().ToString())
                 .Options;
 
-            // Seed data
             using (var context = new ApplicationDbContext(options))
             {
+                context.Users.Add(new ApplicationUser 
+                { 
+                    Id = "user1", 
+                    UserName = "tutor@test.com", 
+                    Email = "tutor@test.com",
+                    FullName = "Test Tutor",
+                    Address = "Test Address",
+                    Bio = "Test Bio"
+                });
                 context.TuitionOffers.Add(new TuitionOffer
                 {
                     Id = 1,
@@ -122,20 +123,16 @@ namespace TutorHubBD.Web.Tests
             {
                 var mockService = new Mock<ITuitionOfferService>();
                 var mockCommissionService = new Mock<ICommissionService>();
+                var mockNotificationService = new Mock<INotificationService>();
                 var mockUserManager = GetMockUserManager();
                 
-                var controller = new TuitionOfferController(mockService.Object, context, mockCommissionService.Object, mockUserManager.Object);
-                // Mock TempData
+                var controller = new TuitionOfferController(mockService.Object, context, mockCommissionService.Object, mockNotificationService.Object, mockUserManager.Object);
                 controller.TempData = new Mock<ITempDataDictionary>().Object;
 
-                // Act
                 var result = await controller.ConfirmHiring(1, 10);
 
-                // Assert
-                // Verify invoice creation was called with correct parameters
                 mockCommissionService.Verify(s => s.CreateInvoiceAsync(1, 1000), Times.Once);
                 
-                // Verify job status updated
                 var job = await context.TuitionOffers.FindAsync(1);
                 Assert.Equal(JobStatus.Filled, job.Status);
                 Assert.Equal(10, job.HiredTutorId);

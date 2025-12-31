@@ -11,83 +11,82 @@ namespace TutorHubBD.Web.Data
         {
         }
 
-        // Register the Tables here
         public DbSet<Tutor> Tutors { get; set; }
         public DbSet<TuitionOffer> TuitionOffers { get; set; }
         public DbSet<TuitionRequest> TuitionRequests { get; set; }
         public DbSet<CommissionInvoice> CommissionInvoices { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure TuitionRequest -> TuitionOffer relationship
             modelBuilder.Entity<TuitionRequest>()
                 .HasOne(tr => tr.TuitionOffer)
                 .WithMany()
                 .HasForeignKey(tr => tr.TuitionOfferId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure TuitionRequest -> Tutor relationship
             modelBuilder.Entity<TuitionRequest>()
                 .HasOne(tr => tr.Tutor)
                 .WithMany()
                 .HasForeignKey(tr => tr.TutorId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Configure TuitionOffer -> HiredTutor relationship
             modelBuilder.Entity<TuitionOffer>()
                 .HasOne(to => to.HiredTutor)
                 .WithMany()
                 .HasForeignKey(to => to.HiredTutorId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Configure TuitionOffer -> Guardian relationship - Use Restrict to avoid cascade cycle
             modelBuilder.Entity<TuitionOffer>()
                 .HasOne(to => to.Guardian)
                 .WithMany()
                 .HasForeignKey(to => to.GuardianId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure Tutor -> User relationship
             modelBuilder.Entity<Tutor>()
                 .HasOne(t => t.User)
                 .WithMany()
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Configure CommissionInvoice relationships
             modelBuilder.Entity<CommissionInvoice>()
                 .HasOne(ci => ci.Tutor)
                 .WithMany()
                 .HasForeignKey(ci => ci.TutorId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent deleting tutor if invoice exists
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<CommissionInvoice>()
                 .HasOne(ci => ci.Job)
                 .WithMany()
                 .HasForeignKey(ci => ci.JobId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent deleting job if invoice exists
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Configure Review relationships - Use Restrict/NoAction to avoid cascade cycles
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.Job)
                 .WithMany()
                 .HasForeignKey(r => r.JobId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade cycle
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.Reviewer)
                 .WithMany()
                 .HasForeignKey(r => r.ReviewerId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade cycle
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.Tutor)
                 .WithMany()
                 .HasForeignKey(r => r.TutorId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade cycle
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
