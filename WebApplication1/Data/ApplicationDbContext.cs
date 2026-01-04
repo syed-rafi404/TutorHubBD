@@ -17,6 +17,7 @@ namespace TutorHubBD.Web.Data
         public DbSet<CommissionInvoice> CommissionInvoices { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<UserOtp> UserOtps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -87,6 +88,11 @@ namespace TutorHubBD.Web.Data
                 .WithMany()
                 .HasForeignKey(n => n.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Index for faster OTP lookups
+            modelBuilder.Entity<UserOtp>()
+                .HasIndex(o => new { o.Email, o.OtpCode, o.Purpose })
+                .HasDatabaseName("IX_UserOtp_Email_Code_Purpose");
         }
     }
 }

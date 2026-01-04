@@ -2,9 +2,6 @@ using System.Threading.Tasks;
 
 namespace TutorHubBD.Web.Services
 {
-    /// <summary>
-    /// Service for sending notifications to users via Email, SMS, and In-App.
-    /// </summary>
     public interface INotificationService
     {
         Task SendEmailAsync(string toEmail, string subject, string body);

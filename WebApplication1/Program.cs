@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using TutorHubBD.Web.Configuration;
 using TutorHubBD.Web.Data;
 using TutorHubBD.Web.Models;
 using TutorHubBD.Web.Services;
@@ -27,10 +28,16 @@ builder.Services.AddControllersWithViews()
     });
 builder.Services.AddRazorPages();
 
+// Configure Stripe Settings
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("StripeSettings"));
+
+// Register application services
 builder.Services.AddScoped<ITuitionOfferService, TuitionOfferService>();
 builder.Services.AddScoped<TuitionRequestService>();
 builder.Services.AddScoped<ICommissionService, CommissionService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IOtpService, OtpService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,213 @@
+@model IEnumerable<TutorHubBD.Web.Models.CommissionInvoice>
+
+@{
+    ViewData["Title"] = "My Invoices";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-white fw-bold" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+            <i class="bi bi-receipt me-2"></i>My Commission Invoices
+        </h2>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i>@TempData["InfoMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul me-2"></i>
+                    @Model.Count() Invoice(s)
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <!-- Desktop Table View -->
+                <div class="table-responsive d-none d-md-block">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Invoice #</th>
+                                <th scope="col">Job Title</th>
+                                <th scope="col">Amount</th>
+                                <th scope="col">Generated Date</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var invoice in Model)
+                            {
+                                <tr>
+                                    <td class="align-middle">
+                                        <strong>#@invoice.InvoiceID</strong>
+                                    </td>
+                                    <td class="align-middle">
+                                        @(invoice.Job?.Title ?? "N/A")
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="fw-bold text-success">BDT @invoice.Amount.ToString("N2")</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        @invoice.GeneratedDate.ToString("MMM dd, yyyy")
+                                    </td>
+                                    <td class="align-middle">
+                                        @if (invoice.Status == TutorHubBD.Web.Models.InvoiceStatus.Paid)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Paid
+                                            </span>
+                                        }
+                                        else if (invoice.Status == TutorHubBD.Web.Models.InvoiceStatus.Overdue)
+                                        {
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-exclamation-circle me-1"></i>Overdue
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-clock me-1"></i>Pending
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="align-middle text-end">
+                                        @if (invoice.Status == TutorHubBD.Web.Models.InvoiceStatus.Pending || 
+                                             invoice.Status == TutorHubBD.Web.Models.InvoiceStatus.Overdue)
+                                        {
+                                            <form asp-action="Pay" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="invoiceId" value="@invoice.InvoiceID" />
+                                                <button type="submit" class="btn btn-primary btn-sm">
+                                                    <i class="bi bi-credit-card me-1"></i>Pay Now
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">
+                                                <i class="bi bi-check-lg me-1"></i>Completed
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile Card View -->
+                <div class="d-md-none">
+                    @foreach (var invoice in Model)
+                    {
+                        <div class="border-bottom p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="mb-1">Invoice #@invoice.InvoiceID</h6>
+                                    <small class="text-muted">@invoice.GeneratedDate.ToString("MMM dd, yyyy")</small>
+                                </div>
+                                @if (invoice.Status == TutorHubBD.Web.Models.InvoiceStatus.Paid)
+                                {
+                                    <span class="badge bg-success">Paid</span>
+                                }
+                                else if (invoice.Status == TutorHubBD.Web.Models.InvoiceStatus.Overdue)
+                                {
+                                    <span class="badge bg-danger">Overdue</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                }
+                            </div>
+                            
+                            <div class="mb-2">
+                                <i class="bi bi-briefcase me-1 text-muted"></i>
+                                <span>@(invoice.Job?.Title ?? "N/A")</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-success fs-5">BDT @invoice.Amount.ToString("N2")</span>
+                                
+                                @if (invoice.Status == TutorHubBD.Web.Models.InvoiceStatus.Pending || 
+                                     invoice.Status == TutorHubBD.Web.Models.InvoiceStatus.Overdue)
+                                {
+                                    <form asp-action="Pay" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="invoiceId" value="@invoice.InvoiceID" />
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-credit-card me-1"></i>Pay Now
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Paid</h6>
+                        <h3 class="mb-0">BDT @Model.Where(i => i.Status == TutorHubBD.Web.Models.InvoiceStatus.Paid).Sum(i => i.Amount).ToString("N2")</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Pending</h6>
+                        <h3 class="mb-0">BDT @Model.Where(i => i.Status == TutorHubBD.Web.Models.InvoiceStatus.Pending).Sum(i => i.Amount).ToString("N2")</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Overdue</h6>
+                        <h3 class="mb-0">BDT @Model.Where(i => i.Status == TutorHubBD.Web.Models.InvoiceStatus.Overdue).Sum(i => i.Amount).ToString("N2")</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-receipt text-muted" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 text-muted">No Invoices Yet</h5>
+                <p class="text-muted">You don't have any commission invoices. Invoices will appear here when you are hired for a job.</p>
+                <a asp-controller="TuitionOffer" asp-action="Index" class="btn btn-primary">
+                    <i class="bi bi-search me-2"></i>Browse Available Jobs
+                </a>
+            </div>
+        </div>
+    }
+</div>
