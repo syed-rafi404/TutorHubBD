@@ -32,16 +32,19 @@ namespace TutorHubBD.Web.Controllers
             _userManager = userManager;
         }
 
-        [Authorize(Roles = "Guardian, Teacher")]
+        // Only Teachers and Admins can browse tuition jobs (Guardians cannot)
+        [Authorize(Roles = "Teacher, Admin")]
         public async Task<IActionResult> Index(string searchCity, string searchMedium, string searchClass)
         {
+            // Only show OPEN jobs (not Filled or Closed)
             var jobs = await _service.SearchOffersAsync(searchCity, searchMedium, searchClass);
+            var openJobs = jobs.Where(j => j.Status == JobStatus.Open).ToList();
 
             ViewData["CurrentCity"] = searchCity;
             ViewData["CurrentMedium"] = searchMedium;
             ViewData["CurrentClass"] = searchClass;
 
-            return View(jobs);
+            return View(openJobs);
         }
 
         [Authorize(Roles = "Guardian")]
@@ -150,7 +153,10 @@ namespace TutorHubBD.Web.Controllers
             };
 
             await _service.CreateOfferAsync(offer);
-            return RedirectToAction(nameof(Index));
+            
+            TempData["SuccessMessage"] = "Your tuition job has been posted successfully!";
+            // Redirect Guardian to MyJobs instead of Index (which they can't access)
+            return RedirectToAction(nameof(MyJobs));
         }
 
         [HttpPost, ActionName("Delete")]
@@ -158,7 +164,31 @@ namespace TutorHubBD.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            // Check if job exists and its status
+            var job = await _context.TuitionOffers.FindAsync(id);
+            
+            if (job == null)
+            {
+                TempData["ErrorMessage"] = "Job not found.";
+                return RedirectToAction(nameof(MyJobs));
+            }
+
+            // Check if job is Filled or Closed - prevent deletion
+            if (job.Status == JobStatus.Filled)
+            {
+                TempData["WarningMessage"] = "A filled job cannot be deleted. A tutor has already been hired for this position.";
+                return RedirectToAction(nameof(MyJobs));
+            }
+
+            if (job.Status == JobStatus.Closed)
+            {
+                TempData["WarningMessage"] = "A closed job cannot be deleted.";
+                return RedirectToAction(nameof(MyJobs));
+            }
+
+            // Only delete if job is Open
             await _service.DeleteOfferAsync(id);
+            TempData["SuccessMessage"] = "Job deleted successfully.";
             return RedirectToAction(nameof(MyJobs));
         }
 
@@ -177,7 +207,7 @@ namespace TutorHubBD.Web.Controllers
             if (tutorId <= 0)
             {
                 TempData["ErrorMessage"] = "Cannot hire: The applicant does not have a valid tutor profile linked to their application.";
-                return RedirectToAction("Index", "TuitionRequest");
+                return RedirectToAction(nameof(MyJobs));
             }
 
             var tutor = await _context.Tutors
@@ -187,15 +217,37 @@ namespace TutorHubBD.Web.Controllers
             if (tutor == null)
             {
                 TempData["ErrorMessage"] = "Cannot hire: The specified tutor profile does not exist.";
-                return RedirectToAction("Index", "TuitionRequest");
+                return RedirectToAction(nameof(MyJobs));
             }
 
             if (job.Status == JobStatus.Open)
             {
+                // Update the Job status
                 job.HiredTutorId = tutorId;
                 job.Status = JobStatus.Filled;
-
                 _context.TuitionOffers.Update(job);
+
+                // UPDATE ALL TUITION REQUESTS FOR THIS JOB
+                // Get all applications for this job
+                var allApplications = await _context.TuitionRequests
+                    .Where(tr => tr.TuitionOfferId == jobId)
+                    .ToListAsync();
+
+                foreach (var application in allApplications)
+                {
+                    if (application.TutorId == tutorId)
+                    {
+                        // The hired tutor's application - mark as "Hired"
+                        application.Status = "Hired";
+                    }
+                    else
+                    {
+                        // Other applicants - mark as "Rejected" (position filled)
+                        application.Status = "Rejected";
+                    }
+                    _context.TuitionRequests.Update(application);
+                }
+
                 await _context.SaveChangesAsync();
                 await _commissionService.CreateInvoiceAsync(job.Id, job.Salary);
 
@@ -209,7 +261,7 @@ namespace TutorHubBD.Web.Controllers
                 var guardianName = job.Guardian?.FullName ?? job.Guardian?.UserName ?? "Guardian";
                 var guardianEmail = job.Guardian?.Email;
 
-                // Send notifications to the TUTOR (Teacher)
+                // Send notifications to the TUTOR (Teacher) who was HIRED
                 if (!string.IsNullOrEmpty(tutor.UserId))
                 {
                     await _notificationService.SendInAppNotificationAsync(
@@ -252,6 +304,25 @@ namespace TutorHubBD.Web.Controllers
                         await _notificationService.SendSmsAsync(
                             tutorPhone,
                             $"TutorHubBD: Congratulations! You've been hired for \"{job.Title}\". Salary: Tk{job.Salary}. Commission: Tk{commissionAmount:F2}. Login to view details."
+                        );
+                    }
+                }
+
+                // Send notifications to REJECTED applicants
+                var rejectedApplications = allApplications.Where(a => a.TutorId != tutorId && a.TutorId != null).ToList();
+                foreach (var rejectedApp in rejectedApplications)
+                {
+                    var rejectedTutor = await _context.Tutors
+                        .Include(t => t.User)
+                        .FirstOrDefaultAsync(t => t.TutorID == rejectedApp.TutorId);
+
+                    if (rejectedTutor != null && !string.IsNullOrEmpty(rejectedTutor.UserId))
+                    {
+                        await _notificationService.SendInAppNotificationAsync(
+                            rejectedTutor.UserId,
+                            "Application Update",
+                            $"The position for \"{job.Title}\" has been filled. Keep applying to other jobs!",
+                            "/TuitionRequest/MyApplications"
                         );
                     }
                 }
@@ -303,7 +374,8 @@ namespace TutorHubBD.Web.Controllers
                 TempData["ErrorMessage"] = "This job is no longer open.";
             }
 
-            return RedirectToAction("Index", "TuitionRequest");
+            // Redirect to MyJobs instead of TuitionRequest/Index (which is confusing for Guardian)
+            return RedirectToAction(nameof(MyJobs));
         }
     }
 }

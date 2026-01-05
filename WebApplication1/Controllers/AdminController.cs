@@ -73,10 +73,14 @@ namespace TutorHubBD.Web.Controllers
                 return NotFound();
 
             tutor.IsVerified = true;
+            
+            // Recalculate profile completeness after verification
+            tutor.IsProfileComplete = tutor.CheckProfileCompleteness();
+            
             _context.Update(tutor);
             await _context.SaveChangesAsync();
 
-            TempData["StatusMessage"] = "Tutor has been verified successfully.";
+            TempData["StatusMessage"] = $"Tutor has been verified successfully. Profile Complete: {tutor.IsProfileComplete}";
             return RedirectToAction(nameof(Index));
         }
 
@@ -91,6 +95,7 @@ namespace TutorHubBD.Web.Controllers
             tutor.VerificationDocumentPath = null;
             tutor.VerificationRequestDate = null;
             tutor.IsVerified = false;
+            tutor.IsProfileComplete = false;
             
             _context.Update(tutor);
             await _context.SaveChangesAsync();

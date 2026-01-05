@@ -1,0 +1,526 @@
+@model IEnumerable<TutorHubBD.Web.Models.ViewModels.BrowseTutorViewModel>
+
+@{
+    ViewData["Title"] = "Browse Tutors";
+    var currentClass = ViewData["CurrentClass"]?.ToString() ?? "";
+    var classOptions = new[] { "Nursery", "KG", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", 
+                               "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "HSC", "A-Level" };
+}
+
+<div class="container mt-5 mb-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="text-white fw-bold" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+            <i class="bi bi-people-fill me-2"></i>Browse Tutors
+        </h1>
+        <p class="text-white-50">Find the perfect tutor for your needs from our verified educators</p>
+    </div>
+
+    <!-- Search Filters -->
+    <div class="glass-card p-4 mb-5">
+        <form method="get" asp-action="Browse" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label text-white"><i class="bi bi-book me-1"></i>Subject</label>
+                <input type="text" name="searchSubject" class="form-control" 
+                       placeholder="e.g., Mathematics, Physics" 
+                       value="@ViewData["CurrentSubject"]" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white"><i class="bi bi-geo-alt me-1"></i>Location</label>
+                <input type="text" name="searchLocation" class="form-control" 
+                       placeholder="e.g., Dhaka, Mirpur" 
+                       value="@ViewData["CurrentLocation"]" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white"><i class="bi bi-mortarboard me-1"></i>Class</label>
+                <select name="searchClass" class="form-select">
+                    <option value="">All Classes</option>
+                    @foreach (var cls in classOptions)
+                    {
+                        <option value="@cls" selected="@(currentClass == cls)">@cls</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-gradient flex-grow-1">
+                    <i class="bi bi-search me-2"></i>Search
+                </button>
+                <a asp-action="Browse" class="btn btn-outline-light">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Count -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="text-white mb-0">
+            <i class="bi bi-person-check me-2"></i>@Model.Count() Verified Tutor(s) Found
+        </h5>
+    </div>
+
+    <!-- Tutors Grid -->
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var tutor in Model)
+            {
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="tutor-card h-100">
+                        <!-- Card Header with Profile Picture -->
+                        <div class="tutor-card-header">
+                            <div class="tutor-avatar-wrapper">
+                                @if (!string.IsNullOrEmpty(tutor.ProfilePictureUrl))
+                                {
+                                    <img src="@tutor.ProfilePictureUrl" alt="Profile" class="tutor-avatar" />
+                                }
+                                else
+                                {
+                                    <div class="tutor-avatar-placeholder">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                }
+                                @if (tutor.IsVerified)
+                                {
+                                    <span class="verified-badge" title="Verified Tutor">
+                                        <i class="bi bi-patch-check-fill"></i>
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="tutor-card-body">
+                            <h4 class="tutor-name">@tutor.FullName</h4>
+                            
+                            <!-- Rating -->
+                            <div class="tutor-rating mb-3">
+                                @if (tutor.Rating > 0)
+                                {
+                                    <span class="stars">
+                                        @for (int i = 0; i < 5; i++)
+                                        {
+                                            if (i < (int)tutor.Rating)
+                                            {
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            }
+                                            else if (i < tutor.Rating)
+                                            {
+                                                <i class="bi bi-star-half text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star text-muted"></i>
+                                            }
+                                        }
+                                    </span>
+                                    <span class="rating-text">@tutor.Rating.ToString("F1")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted"><i class="bi bi-star me-1"></i>New Tutor</span>
+                                }
+                            </div>
+
+                            <!-- Info Items -->
+                            <div class="tutor-info">
+                                @if (!string.IsNullOrEmpty(tutor.Education))
+                                {
+                                    <div class="info-item">
+                                        <i class="bi bi-mortarboard-fill text-primary"></i>
+                                        <span>@tutor.Education</span>
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(tutor.Subjects))
+                                {
+                                    <div class="info-item">
+                                        <i class="bi bi-book-fill text-success"></i>
+                                        <span>@tutor.Subjects</span>
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(tutor.PreferredLocations))
+                                {
+                                    <div class="info-item">
+                                        <i class="bi bi-geo-alt-fill text-danger"></i>
+                                        <span>@tutor.PreferredLocations</span>
+                                    </div>
+                                }
+
+                                @if (tutor.Experience.HasValue && tutor.Experience > 0)
+                                {
+                                    <div class="info-item">
+                                        <i class="bi bi-briefcase-fill text-info"></i>
+                                        <span>@tutor.Experience year(s) experience</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Classes Tags -->
+                            @if (!string.IsNullOrEmpty(tutor.PreferredClasses))
+                            {
+                                var classes = tutor.PreferredClasses.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                <div class="tutor-classes mt-3">
+                                    @foreach (var cls in classes.Take(4))
+                                    {
+                                        <span class="class-tag">@cls.Trim()</span>
+                                    }
+                                    @if (classes.Length > 4)
+                                    {
+                                        <span class="class-tag more">+@(classes.Length - 4) more</span>
+                                    }
+                                </div>
+                            }
+
+                            <!-- Bio Preview -->
+                            @if (!string.IsNullOrEmpty(tutor.Bio))
+                            {
+                                <p class="tutor-bio mt-3">
+                                    @(tutor.Bio.Length > 100 ? tutor.Bio.Substring(0, 100) + "..." : tutor.Bio)
+                                </p>
+                            }
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="tutor-card-footer">
+                            <button type="button" class="btn btn-view-profile" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#tutorModal@(tutor.TutorId)">
+                                <i class="bi bi-eye me-2"></i>View Full Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tutor Detail Modal -->
+                <div class="modal fade" id="tutorModal@(tutor.TutorId)" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content tutor-modal">
+                            <div class="modal-header">
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(tutor.ProfilePictureUrl))
+                                    {
+                                        <img src="@tutor.ProfilePictureUrl" alt="Profile" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                                            <i class="bi bi-person-fill text-white" style="font-size: 1.5rem;"></i>
+                                        </div>
+                                    }
+                                    <div>
+                                        <h5 class="modal-title mb-0">
+                                            @tutor.FullName
+                                            @if (tutor.IsVerified)
+                                            {
+                                                <i class="bi bi-patch-check-fill text-primary ms-2" title="Verified"></i>
+                                            }
+                                        </h5>
+                                        @if (tutor.Rating > 0)
+                                        {
+                                            <small class="text-warning">
+                                                @for (int i = 0; i < (int)tutor.Rating; i++)
+                                                {
+                                                    <i class="bi bi-star-fill"></i>
+                                                }
+                                                <span class="text-muted ms-1">(@tutor.Rating.ToString("F1"))</span>
+                                            </small>
+                                        }
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary"><i class="bi bi-mortarboard me-2"></i>Education</h6>
+                                        <p>@(tutor.Education ?? "Not specified")</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary"><i class="bi bi-briefcase me-2"></i>Experience</h6>
+                                        <p>@(tutor.Experience?.ToString() ?? "0") year(s)</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary"><i class="bi bi-book me-2"></i>Subjects</h6>
+                                        <p>@(tutor.Subjects ?? "Not specified")</p>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-primary"><i class="bi bi-geo-alt me-2"></i>Preferred Locations</h6>
+                                        <p>@(tutor.PreferredLocations ?? "Not specified")</p>
+                                    </div>
+                                    <div class="col-12 mb-3">
+                                        <h6 class="text-primary"><i class="bi bi-list-check me-2"></i>Classes</h6>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @if (!string.IsNullOrEmpty(tutor.PreferredClasses))
+                                            {
+                                                foreach (var cls in tutor.PreferredClasses.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                                {
+                                                    <span class="badge bg-secondary">@cls.Trim()</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Not specified</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <h6 class="text-primary"><i class="bi bi-file-text me-2"></i>About</h6>
+                                        <p class="mb-0">@(tutor.Bio ?? "No bio available")</p>
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(tutor.Email) || !string.IsNullOrEmpty(tutor.PhoneNumber))
+                                {
+                                    <hr />
+                                    <h6 class="text-primary mb-3"><i class="bi bi-person-lines-fill me-2"></i>Contact Information</h6>
+                                    <div class="row">
+                                        @if (!string.IsNullOrEmpty(tutor.Email))
+                                        {
+                                            <div class="col-md-6">
+                                                <p class="mb-2">
+                                                    <i class="bi bi-envelope text-muted me-2"></i>
+                                                    <a href="mailto:@tutor.Email" class="text-decoration-none">@tutor.Email</a>
+                                                </p>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(tutor.PhoneNumber))
+                                        {
+                                            <div class="col-md-6">
+                                                <p class="mb-2">
+                                                    <i class="bi bi-telephone text-muted me-2"></i>
+                                                    <a href="tel:@tutor.PhoneNumber" class="text-decoration-none">@tutor.PhoneNumber</a>
+                                                </p>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <a asp-controller="TuitionOffer" asp-action="Create" class="btn btn-primary">
+                                    <i class="bi bi-plus-lg me-2"></i>Post a Job to Hire
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-search text-white-50" style="font-size: 4rem;"></i>
+            <h4 class="text-white mt-3">No Tutors Found</h4>
+            <p class="text-white-50">
+                @if (!string.IsNullOrEmpty(ViewData["CurrentSubject"]?.ToString()) || 
+                     !string.IsNullOrEmpty(ViewData["CurrentLocation"]?.ToString()) ||
+                     !string.IsNullOrEmpty(currentClass))
+                {
+                    <text>Try adjusting your search filters or </text>
+                    <a asp-action="Browse" class="text-white">clear all filters</a>
+                }
+                else
+                {
+                    <text>There are no verified tutors available at the moment.</text>
+                }
+            </p>
+        </div>
+    }
+</div>
+
+<style>
+    .tutor-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .tutor-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .tutor-card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        text-align: center;
+        position: relative;
+    }
+
+    .tutor-avatar-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .tutor-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .tutor-avatar-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 5px solid white;
+    }
+
+    .tutor-avatar-placeholder i {
+        font-size: 3rem;
+        color: white;
+    }
+
+    .verified-badge {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .verified-badge i {
+        color: #667eea;
+        font-size: 1.2rem;
+    }
+
+    .tutor-card-body {
+        padding: 25px;
+    }
+
+    .tutor-name {
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .tutor-rating {
+        text-align: center;
+    }
+
+    .tutor-rating .stars i {
+        font-size: 0.9rem;
+    }
+
+    .tutor-rating .rating-text {
+        font-weight: 600;
+        color: #666;
+        margin-left: 8px;
+    }
+
+    .tutor-info {
+        margin-top: 15px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: #555;
+    }
+
+    .info-item i {
+        margin-right: 10px;
+        margin-top: 3px;
+        font-size: 1rem;
+    }
+
+    .info-item span {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    .tutor-classes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .class-tag {
+        background: #f0f0f0;
+        color: #666;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .class-tag.more {
+        background: #667eea;
+        color: white;
+    }
+
+    .tutor-bio {
+        font-size: 0.85rem;
+        color: #777;
+        line-height: 1.6;
+        margin-bottom: 0;
+    }
+
+    .tutor-card-footer {
+        padding: 20px 25px;
+        background: #f8f9fa;
+        border-top: 1px solid #eee;
+    }
+
+    .btn-view-profile {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-view-profile:hover {
+        transform: scale(1.02);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .tutor-modal .modal-content {
+        border: none;
+        border-radius: 20px;
+    }
+
+    .tutor-modal .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px 20px 0 0;
+        padding: 20px 25px;
+    }
+
+    .tutor-modal .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .tutor-modal .modal-body {
+        padding: 25px;
+    }
+
+    .tutor-modal .modal-body h6 {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+</style>

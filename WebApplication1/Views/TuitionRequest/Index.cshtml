@@ -9,29 +9,80 @@
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+            <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
+            <i class="bi bi-x-circle me-2"></i>@TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-white fw-bold" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-            <i class="bi bi-briefcase me-2"></i> Job Applications Received
+            <i class="bi bi-people me-2"></i>Applications Dashboard
         </h2>
+        <a asp-controller="TuitionOffer" asp-action="MyJobs" class="btn btn-outline-light">
+            <i class="bi bi-briefcase me-2"></i>View My Jobs
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    @{
+        var totalApplications = Model.Count();
+        var pendingCount = Model.Count(m => m.Status == "Pending");
+        var acceptedCount = Model.Count(m => m.Status == "Accepted");
+        var hiredCount = Model.Count(m => m.Status == "Hired");
+        var rejectedCount = Model.Count(m => m.Status == "Rejected");
+    }
+    
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@totalApplications</h3>
+                    <small>Total Applications</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@pendingCount</h3>
+                    <small>Pending Review</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@acceptedCount</h3>
+                    <small>Shortlisted</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@hiredCount</h3>
+                    <small>Hired</small>
+                </div>
+            </div>
+        </div>
     </div>
 
     @if (!Model.Any())
     {
         <div class="alert alert-light shadow-sm border-0 p-4 text-center" role="alert">
-            <h4 class="alert-heading mb-3"><i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i></h4>
-            <p class="mb-0 text-muted">No applications received yet.</p>
+            <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+            <h4 class="mt-3">No Applications Yet</h4>
+            <p class="mb-3 text-muted">You haven't received any applications for your jobs yet.</p>
+            <a asp-controller="TuitionOffer" asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-2"></i>Post a New Job
+            </a>
         </div>
     }
     else
@@ -41,11 +92,11 @@
                 <table class="table dashboard-table">
                     <thead>
                         <tr>
-                            <th>Student Name</th>
-                            <th>Email</th>
-                            <th>Applied For (Job)</th>
+                            <th>Applicant</th>
+                            <th>Contact</th>
+                            <th>Job</th>
                             <th>Message</th>
-                            <th>Date</th>
+                            <th>Applied On</th>
                             <th>Status</th>
                             <th class="text-end">Actions</th>
                         </tr>
@@ -54,82 +105,125 @@
                         @foreach (var item in Model)
                         {
                             <tr>
-                                <td class="fw-bold">@item.StudentName</td>
                                 <td>
-                                    <a href="mailto:@item.StudentEmail" class="text-decoration-none text-secondary">
-                                        <i class="bi bi-envelope me-1"></i> @item.StudentEmail
+                                    <div class="d-flex align-items-center">
+                                        @if (item.Tutor?.User?.ProfilePictureUrl != null)
+                                        {
+                                            <img src="@item.Tutor.User.ProfilePictureUrl" alt="Profile" 
+                                                 class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person text-white"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <strong>@item.StudentName</strong>
+                                            @if (item.Tutor?.IsVerified == true)
+                                            {
+                                                <i class="bi bi-patch-check-fill text-primary ms-1" title="Verified Tutor"></i>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="mailto:@item.StudentEmail" class="text-decoration-none text-secondary d-block">
+                                        <i class="bi bi-envelope me-1"></i>@item.StudentEmail
                                     </a>
                                 </td>
                                 <td>
                                     <span class="badge-job-title">
-                                        @(item.TuitionOffer != null ? item.TuitionOffer.Title : "Job Deleted")
+                                        @(item.TuitionOffer?.Title ?? "Job Deleted")
                                     </span>
-                                    @if (item.TuitionOffer != null && item.TuitionOffer.Status == JobStatus.Filled)
+                                    @if (item.TuitionOffer != null)
                                     {
-                                        <span class="badge bg-secondary ms-1">Filled</span>
+                                        @if (item.TuitionOffer.Status == JobStatus.Filled)
+                                        {
+                                            <span class="badge bg-success ms-1">Filled</span>
+                                        }
+                                        else if (item.TuitionOffer.Status == JobStatus.Closed)
+                                        {
+                                            <span class="badge bg-secondary ms-1">Closed</span>
+                                        }
                                     }
                                 </td>
                                 <td>
-                                    <span class="d-inline-block text-truncate" style="max-width: 200px;" title="@item.Message">
-                                        @item.Message
+                                    <span class="d-inline-block text-truncate" style="max-width: 150px;" title="@item.Message">
+                                        @(item.Message ?? "No message")
                                     </span>
                                 </td>
-                                <td>@item.RequestDate.ToString("dd MMM yyyy")</td>
+                                <td>
+                                    <small>@item.RequestDate.ToString("dd MMM yyyy")</small>
+                                </td>
                                 <td>
                                     @{
-                                        var statusClass = item.Status?.ToLower() switch
+                                        var (statusClass, statusIcon) = item.Status?.ToLower() switch
                                         {
-                                            "accepted" => "badge-accepted",
-                                            "rejected" => "badge-rejected",
-                                            _ => "badge-pending"
+                                            "hired" => ("bg-success", "bi-check-circle-fill"),
+                                            "accepted" => ("bg-info", "bi-hand-thumbs-up-fill"),
+                                            "rejected" => ("bg-danger", "bi-x-circle-fill"),
+                                            _ => ("bg-warning text-dark", "bi-clock-fill")
                                         };
                                     }
-                                    <span class="badge-status @statusClass">@item.Status</span>
+                                    <span class="badge @statusClass">
+                                        <i class="bi @statusIcon me-1"></i>@item.Status
+                                    </span>
                                 </td>
                                 <td class="text-end">
-                                    <div class="d-flex justify-content-end gap-2 align-items-center">
-                                        @if (item.Status == "Pending")
+                                    <div class="d-flex justify-content-end gap-2 align-items-center flex-wrap">
+                                        @if (item.Status == "Pending" && item.TuitionOffer?.Status == JobStatus.Open)
                                         {
                                             <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
                                                 <input type="hidden" name="id" value="@item.RequestID" />
                                                 <input type="hidden" name="status" value="Accepted" />
-                                                <button type="submit" class="btn btn-icon-action btn-icon-accept" title="Shortlist">
-                                                    <i class="fa-solid fa-check"></i>
+                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Shortlist this applicant">
+                                                    <i class="bi bi-check-lg"></i> Shortlist
                                                 </button>
                                             </form>
                                             <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
                                                 <input type="hidden" name="id" value="@item.RequestID" />
                                                 <input type="hidden" name="status" value="Rejected" />
-                                                <button type="submit" class="btn btn-icon-action btn-icon-reject" title="Reject">
-                                                    <i class="fa-solid fa-xmark"></i>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Reject this applicant">
+                                                    <i class="bi bi-x-lg"></i> Reject
                                                 </button>
                                             </form>
                                         }
-                                        else if (item.Status == "Accepted")
+                                        else if (item.Status == "Accepted" && item.TuitionOffer?.Status == JobStatus.Open)
                                         {
-                                            <span class="badge bg-success me-2">Shortlisted</span>
-                                            
-                                            @if (item.TuitionOffer != null && item.TuitionOffer.Status == JobStatus.Open)
+                                            @if (item.TutorId.HasValue && item.TutorId.Value > 0)
                                             {
-                                                @if (item.TutorId.HasValue && item.TutorId.Value > 0)
-                                                {
-                                                    <form asp-controller="TuitionOffer" asp-action="ConfirmHiring" method="post" class="d-inline">
-                                                        <input type="hidden" name="jobId" value="@item.TuitionOfferId" />
-                                                        <input type="hidden" name="tutorId" value="@item.TutorId.Value" />
-                                                        <button type="submit" class="btn btn-sm btn-primary fw-bold" onclick="return confirm('Are you sure you want to hire this tutor? This will close the job post.');">
-                                                            Hire This Tutor
-                                                        </button>
-                                                    </form>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-warning text-dark" title="This applicant does not have a tutor profile linked">No Tutor Profile</span>
-                                                }
+                                                <form asp-controller="TuitionOffer" asp-action="ConfirmHiring" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="jobId" value="@item.TuitionOfferId" />
+                                                    <input type="hidden" name="tutorId" value="@item.TutorId.Value" />
+                                                    <button type="submit" class="btn btn-sm btn-success fw-bold" 
+                                                            onclick="return confirm('Are you sure you want to hire this tutor? This will close the job post and other applicants will be rejected.');">
+                                                        <i class="bi bi-person-check me-1"></i>Hire
+                                                    </button>
+                                                </form>
                                             }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark" title="This applicant does not have a tutor profile">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>No Profile
+                                                </span>
+                                            }
+                                        }
+                                        else if (item.Status == "Hired")
+                                        {
+                                            <span class="text-success fw-bold">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Hired
+                                            </span>
                                         }
                                         else if (item.Status == "Rejected")
                                         {
-                                            <span class="badge bg-secondary">Rejected</span>
+                                            <span class="text-muted">
+                                                <i class="bi bi-x-circle me-1"></i>Rejected
+                                            </span>
                                         }
                                     </div>
                                 </td>

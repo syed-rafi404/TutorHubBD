@@ -3,39 +3,61 @@
 }
 
 <div class="container hero-section">
-    <div class="row align-items-center w-100">
+    <div class="row align-items-center w-100 m-0">
 
-        <!-- Left Column: Text -->
-        <div class="col-lg-6 text-start">
+        <div class="col-lg-6 col-12 text-start mb-4 mb-lg-0">
             <h4 class="mb-2" style="font-weight: 500;">Welcome to</h4>
             <h1 class="hero-title">TutorHubBD</h1>
             <h3 class="hero-subtitle">An AI-Powered Tuition Marketplace Platform</h3>
 
             <p class="hero-desc">
-                Empower your academic future with the right guidance. TutorHub BD seamlessly connects dedicated students with verified tutors, making quality education accessible and tuition jobs easier to find. Experience a platform where your skills are valued and learning knows no bounds.
+                Empower your academic future with the right guidance. TutorHub BD seamlessly connects dedicated students with verified tutors, making quality education accessible and tuition jobs easier to find.
             </p>
 
-            <p class="mb-4 text-white" style="font-size: 1.1rem;">
-                Take the help of our latest AI model to <br />
-                get a suitable teacher for your child
-            </p>
+            <div class="ai-search-container mt-4">
+                <div class="ai-search-header mb-3">
+                    <span class="ai-badge">
+                        <i class="bi bi-stars"></i> AI-Powered Search
+                    </span>
+                    <p class="text-white-50 mb-0 mt-2 small">Describe your ideal tutor and let our AI find the best match</p>
+                </div>
 
-            <div class="d-flex">
-                <a asp-controller="Account" asp-action="Register" class="btn btn-pink">Register</a>
-                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-white">Sign In</a>
+                <form asp-controller="Home" asp-action="AiSearch" method="post" class="ai-search-form">
+                    @Html.AntiForgeryToken()
+                    <div class="ai-search-input-wrapper">
+                        <i class="bi bi-robot ai-search-icon d-none d-sm-block"></i>
+                        <textarea name="prompt" 
+                                  class="ai-search-input" 
+                                  rows="3"
+                                  placeholder="Describe your perfect tutor (e.g., 'I need a patient math teacher for Class 8 in Mirpur')"
+                                  required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-ai-search mt-3">
+                        <i class="bi bi-search me-2"></i>Find My Perfect Tutor
+                    </button>
+                </form>
+            </div>
+
+            <div class="d-flex flex-wrap mt-4 gap-2">
+                <a asp-controller="Account" asp-action="Register" class="btn btn-outline-white btn-sm">
+                    <i class="bi bi-person-plus me-1"></i>Register
+                </a>
+                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-white btn-sm">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                </a>
+                <a asp-controller="TuitionOffer" asp-action="Index" class="btn btn-outline-white btn-sm">
+                    <i class="bi bi-briefcase me-1"></i>Browse Jobs
+                </a>
             </div>
 
         </div>
 
-        <!-- Right Column: Image -->
-        <div class="col-lg-6 text-end hero-image-container">
-            <!-- Ensure your image is named 'hero-main.png' in wwwroot/images -->
-            <img src="~/images/hero-main.png" alt="Tutor and Student" class="hero-img" />
+        <div class="col-lg-6 col-12 text-center text-lg-end hero-image-container">
+            <img src="~/images/hero-main.png" alt="Tutor and Student" class="hero-img img-fluid" />
         </div>
     </div>
 </div>
 
-<!-- Footer Contact Bar (White strip at bottom) -->
 <div class="footer-contact-bar">
     <div class="footer-item">
         <i class="bi bi-telephone-fill"></i> +8801471-817161
@@ -47,3 +69,104 @@
         <i class="bi bi-envelope-fill"></i> hello@tutorhubbd.com
     </div>
 </div>
+
+<style>
+    .ai-search-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .ai-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .ai-badge i {
+        animation: sparkle 1.5s ease-in-out infinite;
+    }
+
+    .ai-search-input-wrapper {
+        position: relative;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .ai-search-icon {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        font-size: 1.3rem;
+        color: #667eea;
+    }
+
+    .ai-search-input {
+        width: 100%;
+        border: none;
+        padding: 15px;
+        padding-left: 50px;
+        font-size: 0.95rem;
+        resize: none;
+        background: transparent;
+        color: #333;
+    }
+
+    @@media (max-width: 576px) {
+        .ai-search-input {
+            padding-left: 15px;
+        }
+    }
+
+    .ai-search-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+    }
+
+    .ai-search-input::placeholder {
+        color: #999;
+        font-size: 0.9rem;
+    }
+
+    .btn-ai-search {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-ai-search:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        color: white;
+    }
+</style>
+
+@section Scripts {
+<script>
+    var styleSheet = document.createElement("style");
+    styleSheet.textContent = `
+        @@keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+    `;
+    document.head.appendChild(styleSheet);
+</script>
+}

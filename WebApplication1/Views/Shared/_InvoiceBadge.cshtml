@@ -1,0 +1,44 @@
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using TutorHubBD.Web.Data
+@using TutorHubBD.Web.Models
+
+@inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext DbContext
+
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var hasPendingInvoices = false;
+    var pendingCount = 0;
+
+    if (user != null)
+    {
+        var tutor = await DbContext.Tutors.FirstOrDefaultAsync(t => t.UserId == user.Id);
+        if (tutor != null)
+        {
+            pendingCount = await DbContext.CommissionInvoices
+                .CountAsync(i => i.TutorId == tutor.TutorID && i.Status == InvoiceStatus.Pending);
+            hasPendingInvoices = pendingCount > 0;
+        }
+    }
+}
+
+<li class="nav-item">
+    <a class="nav-link position-relative" href="/Payment/MyInvoices" title="My Invoices">
+        <i class="bi bi-receipt me-1"></i>Invoices
+        @if (hasPendingInvoices)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                  style="font-size: 0.65rem; margin-left: -15px;">
+                @pendingCount
+                <span class="visually-hidden">pending invoices</span>
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-success ms-1" style="font-size: 0.65rem;">
+                <i class="bi bi-check-circle"></i>
+            </span>
+        }
+    </a>
+</li>

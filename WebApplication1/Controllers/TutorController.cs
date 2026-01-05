@@ -25,6 +25,63 @@ namespace TutorHubBD.Web.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
+        // GET: /Tutor/Browse - Browse all tutors (Guardian and Admin only)
+        [HttpGet]
+        [Authorize(Roles = "Guardian, Admin")]
+        public async Task<IActionResult> Browse(string? searchSubject, string? searchLocation, string? searchClass)
+        {
+            var query = _context.Tutors
+                .Include(t => t.User)
+                .Where(t => t.IsVerified && t.IsProfileComplete)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrEmpty(searchSubject))
+            {
+                query = query.Where(t => t.Subjects != null && 
+                    t.Subjects.ToLower().Contains(searchSubject.ToLower()));
+            }
+
+            if (!string.IsNullOrEmpty(searchLocation))
+            {
+                query = query.Where(t => t.PreferredLocations != null && 
+                    t.PreferredLocations.ToLower().Contains(searchLocation.ToLower()));
+            }
+
+            if (!string.IsNullOrEmpty(searchClass))
+            {
+                query = query.Where(t => t.PreferredClasses != null && 
+                    t.PreferredClasses.ToLower().Contains(searchClass.ToLower()));
+            }
+
+            var tutors = await query
+                .OrderByDescending(t => t.Rating)
+                .ThenByDescending(t => t.Experience ?? 0)
+                .Select(t => new BrowseTutorViewModel
+                {
+                    TutorId = t.TutorID,
+                    FullName = t.User != null ? t.User.FullName ?? t.User.UserName ?? "Unknown" : "Unknown",
+                    ProfilePictureUrl = t.ProfilePictureUrl ?? t.User!.ProfilePictureUrl,
+                    Education = t.Education,
+                    Subjects = t.Subjects,
+                    PreferredClasses = t.PreferredClasses,
+                    PreferredLocations = t.PreferredLocations,
+                    Bio = t.Bio,
+                    Experience = t.Experience,
+                    Rating = t.Rating,
+                    IsVerified = t.IsVerified,
+                    Email = t.User != null ? t.User.Email : null,
+                    PhoneNumber = t.User != null ? t.User.PhoneNumber : null
+                })
+                .ToListAsync();
+
+            ViewData["CurrentSubject"] = searchSubject;
+            ViewData["CurrentLocation"] = searchLocation;
+            ViewData["CurrentClass"] = searchClass;
+
+            return View(tutors);
+        }
+
         // GET: /Tutor/EditProfile
         [HttpGet]
         public async Task<IActionResult> EditProfile()
@@ -49,7 +106,10 @@ namespace TutorHubBD.Web.Controllers
                     Rating = 0,
                     IsVerified = false,
                     Experience = null,
-                    PreferredLocations = ""
+                    PreferredLocations = "",
+                    Bio = "",
+                    PreferredClasses = "",
+                    IsProfileComplete = false
                 };
                 _context.Tutors.Add(tutor);
                 await _context.SaveChangesAsync();
@@ -62,11 +122,17 @@ namespace TutorHubBD.Web.Controllers
                 Subjects = tutor.Subjects,
                 Experience = tutor.Experience,
                 PreferredLocations = tutor.PreferredLocations,
+                Bio = tutor.Bio,
+                ProfilePictureUrl = tutor.ProfilePictureUrl,
                 Rating = tutor.Rating,
                 IsVerified = tutor.IsVerified,
+                IsProfileComplete = tutor.IsProfileComplete,
                 VerificationDocumentPath = tutor.VerificationDocumentPath,
                 VerificationRequestDate = tutor.VerificationRequestDate
             };
+            
+            // Set selected classes from comma-separated string
+            viewModel.SetSelectedClassesFromString(tutor.PreferredClasses);
 
             return View(viewModel);
         }
@@ -95,16 +161,89 @@ namespace TutorHubBD.Web.Controllers
                 return NotFound("Tutor profile not found.");
             }
 
+            // Handle profile picture upload
+            if (model.ProfilePicture != null && model.ProfilePicture.Length > 0)
+            {
+                var uploadResult = await UploadProfilePicture(model.ProfilePicture, tutor);
+                if (!uploadResult.Success)
+                {
+                    ModelState.AddModelError("ProfilePicture", uploadResult.ErrorMessage!);
+                    model.ProfilePictureUrl = tutor.ProfilePictureUrl;
+                    return View(model);
+                }
+                tutor.ProfilePictureUrl = uploadResult.FilePath;
+            }
+
             tutor.Education = model.Education ?? "";
             tutor.Subjects = model.Subjects ?? "";
             tutor.Experience = model.Experience;
             tutor.PreferredLocations = model.PreferredLocations ?? "";
+            tutor.Bio = model.Bio ?? "";
+            tutor.PreferredClasses = model.GetPreferredClassesString();
+            
+            // Update profile completeness status
+            tutor.IsProfileComplete = tutor.CheckProfileCompleteness();
 
             _context.Update(tutor);
             await _context.SaveChangesAsync();
 
             TempData["StatusMessage"] = "Your tutor profile has been updated.";
             return RedirectToAction(nameof(EditProfile));
+        }
+
+        // Helper method to upload profile picture
+        private async Task<(bool Success, string? FilePath, string? ErrorMessage)> UploadProfilePicture(IFormFile file, Tutor tutor)
+        {
+            // Validate file type
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return (false, null, "Invalid file type. Allowed types: JPG, JPEG, PNG, GIF.");
+            }
+
+            // Validate file size (max 2MB)
+            if (file.Length > 2 * 1024 * 1024)
+            {
+                return (false, null, "File size must be less than 2MB.");
+            }
+
+            // Create the uploads directory if it doesn't exist
+            var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "tutor-profiles");
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            // Delete old profile picture if exists
+            if (!string.IsNullOrEmpty(tutor.ProfilePictureUrl))
+            {
+                var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, tutor.ProfilePictureUrl.TrimStart('/'));
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+            }
+
+            // Generate unique filename
+            var uniqueFileName = $"tutor_{tutor.TutorID}_{DateTime.Now:yyyyMMddHHmmss}{fileExtension}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            // Save the file
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(fileStream);
+            }
+
+            return (true, $"/uploads/tutor-profiles/{uniqueFileName}", null);
+        }
+
+        // GET: /Tutor/ProfileIncomplete
+        [HttpGet]
+        public IActionResult ProfileIncomplete()
+        {
+            return View();
         }
 
         // POST: /Tutor/UploadVerification
@@ -182,6 +321,7 @@ namespace TutorHubBD.Web.Controllers
             
             // Reset verification status when new document is uploaded
             tutor.IsVerified = false;
+            tutor.IsProfileComplete = tutor.CheckProfileCompleteness();
 
             _context.Update(tutor);
             await _context.SaveChangesAsync();

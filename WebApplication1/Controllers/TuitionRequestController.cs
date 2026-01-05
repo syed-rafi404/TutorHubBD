@@ -30,7 +30,6 @@ namespace TutorHubBD.Web.Controllers
             _notificationService = notificationService;
         }
 
-        // GET: Teacher's Applications Dashboard
         [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> MyApplications()
         {
@@ -38,7 +37,6 @@ namespace TutorHubBD.Web.Controllers
             if (user == null)
                 return RedirectToAction("Login", "Account");
 
-            // Find the tutor profile for the current user
             var tutor = await _context.Tutors.FirstOrDefaultAsync(t => t.UserId == user.Id);
             if (tutor == null)
             {
@@ -46,7 +44,6 @@ namespace TutorHubBD.Web.Controllers
                 return View(new List<MyApplicationsViewModel>());
             }
 
-            // Get all applications for this tutor
             var applications = await _context.TuitionRequests
                 .AsNoTracking()
                 .Include(r => r.TuitionOffer)
@@ -60,35 +57,44 @@ namespace TutorHubBD.Web.Controllers
                     GuardianName = r.TuitionOffer.Guardian != null ? r.TuitionOffer.Guardian.FullName ?? r.TuitionOffer.Guardian.UserName ?? "Unknown" : "Unknown",
                     Salary = r.TuitionOffer.Salary,
                     AppliedDate = r.RequestDate,
-                    Status = r.TuitionOffer.HiredTutorId == tutor.TutorID ? "Hired" : r.Status ?? "Pending"
+                    Status = r.Status ?? "Pending"
                 })
                 .ToListAsync();
 
             return View(applications);
         }
 
-        // GET: Show the "Apply Now" form for a specific Job
-        [Authorize]
+        [Authorize(Roles = "Teacher")]
         public async Task<IActionResult> Apply(int jobId)
         {
             var job = await _context.TuitionOffers.FindAsync(jobId);
             if (job == null) return NotFound();
 
-            // Check if job is still open
             if (job.Status != JobStatus.Open)
             {
                 TempData["ErrorMessage"] = "This job is no longer accepting applications.";
                 return RedirectToAction("Index", "TuitionOffer");
             }
 
-            // Get current user and pre-fill their info
             var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var tutor = await _context.Tutors.FirstOrDefaultAsync(t => t.UserId == user.Id);
             
+            if (tutor == null || !tutor.IsVerified || !tutor.IsProfileComplete)
+            {
+                TempData["ErrorMessage"] = "Your profile must be verified and complete before applying for jobs. Please complete your tutor profile.";
+                return RedirectToAction("ProfileIncomplete", "Tutor");
+            }
+
             var request = new TuitionRequest
             {
                 TuitionOfferId = job.Id,
-                StudentName = user?.FullName ?? "",
-                StudentEmail = user?.Email ?? ""
+                StudentName = user.FullName ?? "",
+                StudentEmail = user.Email ?? ""
             };
 
             ViewData["JobTitle"] = job.Title;
@@ -96,24 +102,37 @@ namespace TutorHubBD.Web.Controllers
             return View(request);
         }
 
-        // GET: List of all applications (Dashboard)
+        [Authorize(Roles = "Guardian, Admin")]
         public async Task<IActionResult> Index()
         {
-            var requests = await _context.TuitionRequests
-                                         .AsNoTracking()
-                                         .Include(r => r.TuitionOffer)
-                                         .Include(r => r.Tutor)
-                                         .ToListAsync();
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return RedirectToAction("Login", "Account");
+
+            IQueryable<TuitionRequest> query = _context.TuitionRequests
+                .AsNoTracking()
+                .Include(r => r.TuitionOffer)
+                    .ThenInclude(o => o.Guardian)
+                .Include(r => r.Tutor)
+                    .ThenInclude(t => t.User);
+
+            if (User.IsInRole("Guardian") && !User.IsInRole("Admin"))
+            {
+                query = query.Where(r => r.TuitionOffer.GuardianId == user.Id);
+            }
+
+            var requests = await query
+                .OrderByDescending(r => r.RequestDate)
+                .ToListAsync();
+
             return View(requests);
         }
 
-        // POST: Save the application to the database
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Teacher")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Apply(TuitionRequest request)
         {
-            // Reload job with Guardian info for notifications
             var job = await _context.TuitionOffers
                 .Include(j => j.Guardian)
                 .FirstOrDefaultAsync(j => j.Id == request.TuitionOfferId);
@@ -123,7 +142,6 @@ namespace TutorHubBD.Web.Controllers
 
             if (!string.IsNullOrEmpty(request.StudentName) && !string.IsNullOrEmpty(request.StudentEmail))
             {
-                // Retrieve the currently logged-in User's ID
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null)
                 {
@@ -131,29 +149,14 @@ namespace TutorHubBD.Web.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-                // Query the Tutors table to find the record where Tutor.UserId matches the logged-in ID
                 var tutor = await _context.Tutors.FirstOrDefaultAsync(t => t.UserId == user.Id);
 
-                // If NO Tutor record is found, auto-create one for the user
-                if (tutor == null)
+                if (tutor == null || !tutor.IsVerified || !tutor.IsProfileComplete)
                 {
-                    // Auto-create a basic Tutor profile for this user
-                    tutor = new Tutor
-                    {
-                        UserId = user.Id,
-                        Education = "Not specified",
-                        Subjects = "Not specified",
-                        Rating = 0,
-                        IsVerified = false
-                    };
-
-                    _context.Tutors.Add(tutor);
-                    await _context.SaveChangesAsync();
-
-                    TempData["InfoMessage"] = "A tutor profile has been automatically created for you. You can update it later in your profile settings.";
+                    TempData["ErrorMessage"] = "Your profile must be verified and complete before applying for jobs.";
+                    return RedirectToAction("ProfileIncomplete", "Tutor");
                 }
 
-                // Assign TutorId and save the application
                 request.TutorId = tutor.TutorID;
                 request.Status = "Pending";
                 request.RequestDate = DateTime.Now;
@@ -164,14 +167,13 @@ namespace TutorHubBD.Web.Controllers
                 var applicantName = user.FullName ?? user.UserName ?? "A tutor";
                 var guardianName = job?.Guardian?.FullName ?? job?.Guardian?.UserName ?? "The guardian";
 
-                // Send notifications to the GUARDIAN (Job Owner)
                 if (job?.GuardianId != null)
                 {
                     await _notificationService.SendInAppNotificationAsync(
                         job.GuardianId,
                         "New Application Received",
                         $"{applicantName} has applied for your job: \"{job.Title}\".",
-                        "/TuitionOffer/ViewApplicants?jobId=" + job.Id
+                        "/TuitionRequest/Index"
                     );
 
                     if (!string.IsNullOrEmpty(job.Guardian?.Email))
@@ -198,7 +200,6 @@ namespace TutorHubBD.Web.Controllers
                     }
                 }
 
-                // Send confirmation to the TEACHER (Applicant)
                 await _notificationService.SendInAppNotificationAsync(
                     user.Id,
                     "Application Submitted Successfully",
@@ -248,17 +249,17 @@ namespace TutorHubBD.Web.Controllers
             return View();
         }
 
-        // POST: Update the status of an application
         [HttpPost]
+        [Authorize(Roles = "Guardian, Admin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, string status)
         {
-            var success = await _tuitionRequestService.UpdateStatusAsync(id, status);
+            var (success, errorMessage) = await _tuitionRequestService.UpdateStatusWithValidationAsync(id, status);
 
             if (success)
                 TempData["SuccessMessage"] = $"Application status updated to {status}.";
             else
-                TempData["ErrorMessage"] = "Application not found or invalid status.";
+                TempData["ErrorMessage"] = errorMessage ?? "Application not found or invalid status.";
 
             return RedirectToAction(nameof(Index));
         }

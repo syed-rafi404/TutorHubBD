@@ -31,6 +31,9 @@ builder.Services.AddRazorPages();
 // Configure Stripe Settings
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("StripeSettings"));
 
+// Register HttpClientFactory for AI Search
+builder.Services.AddHttpClient();
+
 // Register application services
 builder.Services.AddScoped<ITuitionOfferService, TuitionOfferService>();
 builder.Services.AddScoped<TuitionRequestService>();
@@ -38,18 +41,64 @@ builder.Services.AddScoped<ICommissionService, CommissionService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
+builder.Services.AddScoped<IAiSearchService, AiSearchService>();
 
 var app = builder.Build();
 
+// Seed roles and admin user
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    string[] roles = { "Admin", "Guardian", "Teacher" };
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     
+    // Create roles if they don't exist
+    string[] roles = { "Admin", "Guardian", "Teacher" };
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
+    }
+    
+    // Seed Admin User
+    var adminEmail = "rafitheflash@gmail.com";
+    var adminPassword = "rafitheflash@gmail.comA1";
+    
+    var existingUser = await userManager.FindByEmailAsync(adminEmail);
+    
+    if (existingUser != null)
+    {
+        // Check if user is already admin
+        var isAdmin = await userManager.IsInRoleAsync(existingUser, "Admin");
+        if (!isAdmin)
+        {
+            // Remove from other roles and add to Admin
+            var currentRoles = await userManager.GetRolesAsync(existingUser);
+            await userManager.RemoveFromRolesAsync(existingUser, currentRoles);
+            await userManager.AddToRoleAsync(existingUser, "Admin");
+        }
+        
+        // Reset password to ensure it matches
+        var token = await userManager.GeneratePasswordResetTokenAsync(existingUser);
+        await userManager.ResetPasswordAsync(existingUser, token, adminPassword);
+    }
+    else
+    {
+        // Create new admin user
+        var adminUser = new ApplicationUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            FullName = "System Administrator",
+            EmailConfirmed = true,
+            Address = "",
+            Bio = ""
+        };
+        
+        var result = await userManager.CreateAsync(adminUser, adminPassword);
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
     }
 }
 

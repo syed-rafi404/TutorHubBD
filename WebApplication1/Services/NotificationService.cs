@@ -70,7 +70,6 @@ namespace TutorHubBD.Web.Services
 
         public Task SendSmsAsync(string phoneNumber, string message)
         {
-            // TODO: Integrate with Twilio for SMS functionality
             _logger.LogInformation("[SMS] To {PhoneNumber}: {Message}", phoneNumber, message);
             return Task.CompletedTask;
         }

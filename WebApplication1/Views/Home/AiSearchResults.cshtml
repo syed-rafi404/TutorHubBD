@@ -1,0 +1,419 @@
+@model TutorHubBD.Web.Models.ViewModels.AiSearchResultsViewModel
+
+@{
+    ViewData["Title"] = "AI Search Results";
+}
+
+<div class="container mt-5 mb-5">
+    <!-- Search Header -->
+    <div class="glass-card p-4 mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="text-white mb-2">
+                    <i class="bi bi-robot me-2"></i>AI Tutor Search
+                </h2>
+                @if (!string.IsNullOrEmpty(Model.OriginalQuery))
+                {
+                    <p class="text-white-50 mb-0">
+                        <strong>Your search:</strong> "@Model.OriginalQuery"
+                    </p>
+                }
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-light">
+                    <i class="bi bi-arrow-left me-2"></i>New Search
+                </a>
+            </div>
+        </div>
+
+        <!-- Extracted Criteria Display -->
+        @if (Model.ExtractedCriteria != null && Model.ExtractedCriteria.IsValid)
+        {
+            <hr class="border-light my-3" />
+            <div class="row">
+                <div class="col-12">
+                    <p class="text-white-50 mb-2"><i class="bi bi-lightbulb me-2"></i>AI understood your request as:</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.Subject))
+                        {
+                            <span class="badge bg-primary">
+                                <i class="bi bi-book me-1"></i>Subject: @Model.ExtractedCriteria.Subject
+                            </span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.ClassLevel))
+                        {
+                            <span class="badge bg-success">
+                                <i class="bi bi-mortarboard me-1"></i>Class: @Model.ExtractedCriteria.ClassLevel
+                            </span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.Location))
+                        {
+                            <span class="badge bg-info">
+                                <i class="bi bi-geo-alt me-1"></i>Location: @Model.ExtractedCriteria.Location
+                            </span>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.GenderPreference))
+                        {
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-person me-1"></i>Gender: @Model.ExtractedCriteria.GenderPreference
+                            </span>
+                        }
+                        @foreach (var keyword in Model.ExtractedCriteria.Keywords)
+                        {
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-tag me-1"></i>@keyword
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Search Again Form -->
+        <hr class="border-light my-3" />
+        <form asp-controller="Home" asp-action="AiSearch" method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+            <div class="col-md-9">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-0">
+                        <i class="bi bi-robot text-primary"></i>
+                    </span>
+                    <input type="text" name="prompt" class="form-control border-0" 
+                           placeholder="Describe your ideal tutor..." 
+                           value="@Model.OriginalQuery" />
+                </div>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-gradient">
+                    <i class="bi bi-search me-2"></i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Error Message -->
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage
+        </div>
+    }
+
+    <!-- Results Count -->
+    @if (Model.Results.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="text-white mb-0">
+                <i class="bi bi-people me-2"></i>Found @Model.Results.Count Tutor(s)
+            </h4>
+            @if (Model.UsedFallback)
+            {
+                <span class="badge bg-secondary">Using basic search</span>
+            }
+        </div>
+    }
+
+    <!-- Results Grid -->
+    <div class="row">
+        @if (Model.Results.Any())
+        {
+            @foreach (var tutor in Model.Results)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 tutor-card border-0 shadow">
+                        <div class="card-body p-4">
+                            <!-- Profile Header -->
+                            <div class="d-flex align-items-center mb-3">
+                                @if (!string.IsNullOrEmpty(tutor.ProfilePictureUrl))
+                                {
+                                    <img src="@tutor.ProfilePictureUrl" alt="@tutor.FullName" 
+                                         class="rounded-circle me-3" 
+                                         style="width: 70px; height: 70px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3"
+                                         style="width: 70px; height: 70px;">
+                                        <i class="bi bi-person-fill text-white" style="font-size: 2rem;"></i>
+                                    </div>
+                                }
+                                <div>
+                                    <h5 class="card-title mb-1">@tutor.FullName</h5>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (tutor.IsVerified)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-patch-check-fill me-1"></i>Verified
+                                            </span>
+                                        }
+                                        @if (tutor.MatchScore > 50)
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-stars me-1"></i>Top Match
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Rating -->
+                            <div class="mb-3">
+                                @if (tutor.Rating > 0)
+                                {
+                                    <span class="text-warning">
+                                        @for (int i = 0; i < (int)tutor.Rating; i++)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        @if (tutor.Rating % 1 >= 0.5)
+                                        {
+                                            <i class="bi bi-star-half"></i>
+                                        }
+                                        @for (int i = (int)Math.Ceiling(tutor.Rating); i < 5; i++)
+                                        {
+                                            <i class="bi bi-star text-secondary"></i>
+                                        }
+                                    </span>
+                                    <span class="ms-2 text-muted">(@tutor.Rating.ToString("F1"))</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted"><i class="bi bi-star"></i> New Tutor</span>
+                                }
+                            </div>
+
+                            <!-- Info -->
+                            @if (!string.IsNullOrEmpty(tutor.Subjects))
+                            {
+                                <p class="mb-2">
+                                    <i class="bi bi-book text-primary me-2"></i>
+                                    <strong>Subjects:</strong> @tutor.Subjects
+                                </p>
+                            }
+
+                            @if (!string.IsNullOrEmpty(tutor.PreferredClasses))
+                            {
+                                <p class="mb-2">
+                                    <i class="bi bi-mortarboard text-success me-2"></i>
+                                    <strong>Classes:</strong> @tutor.PreferredClasses
+                                </p>
+                            }
+
+                            @if (!string.IsNullOrEmpty(tutor.PreferredLocations))
+                            {
+                                <p class="mb-2">
+                                    <i class="bi bi-geo-alt text-danger me-2"></i>
+                                    <strong>Locations:</strong> @tutor.PreferredLocations
+                                </p>
+                            }
+
+                            @if (tutor.Experience.HasValue)
+                            {
+                                <p class="mb-2">
+                                    <i class="bi bi-briefcase text-info me-2"></i>
+                                    <strong>Experience:</strong> @tutor.Experience years
+                                </p>
+                            }
+
+                            @if (!string.IsNullOrEmpty(tutor.Education))
+                            {
+                                <p class="mb-2">
+                                    <i class="bi bi-award text-warning me-2"></i>
+                                    <strong>Education:</strong> @tutor.Education
+                                </p>
+                            }
+
+                            <!-- Bio Preview -->
+                            @if (!string.IsNullOrEmpty(tutor.Bio))
+                            {
+                                <p class="text-muted small mb-3">
+                                    @if (tutor.Bio.Length > 120)
+                                    {
+                                        @tutor.Bio.Substring(0, 120)<text>...</text>
+                                    }
+                                    else
+                                    {
+                                        @tutor.Bio
+                                    }
+                                </p>
+                            }
+
+                            <!-- Match Score Bar -->
+                            <div class="mb-3">
+                                <small class="text-muted">Match Score: @tutor.MatchScore%</small>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar @GetMatchScoreColor(tutor.MatchScore)" 
+                                         role="progressbar" 
+                                         style="width: @Math.Min(tutor.MatchScore, 100)%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Action Button -->
+                            <div class="d-grid">
+                                <a href="#" class="btn btn-primary" 
+                                   data-bs-toggle="modal" 
+                                   data-bs-target="#tutorModal@(tutor.TutorId)">
+                                    <i class="bi bi-eye me-2"></i>View Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tutor Detail Modal -->
+                <div class="modal fade" id="tutorModal@(tutor.TutorId)" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-person-circle me-2"></i>@tutor.FullName
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        @if (!string.IsNullOrEmpty(tutor.ProfilePictureUrl))
+                                        {
+                                            <img src="@tutor.ProfilePictureUrl" alt="@tutor.FullName" 
+                                                 class="rounded-circle img-thumbnail mb-3" 
+                                                 style="width: 150px; height: 150px; object-fit: cover;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-3"
+                                                 style="width: 150px; height: 150px;">
+                                                <i class="bi bi-person-fill text-white" style="font-size: 4rem;"></i>
+                                            </div>
+                                        }
+
+                                        @if (tutor.IsVerified)
+                                        {
+                                            <span class="badge bg-success mb-2">
+                                                <i class="bi bi-patch-check-fill me-1"></i>Verified Tutor
+                                            </span>
+                                        }
+
+                                        <div class="text-center">
+                                            @if (tutor.Rating > 0)
+                                            {
+                                                <div class="text-warning">
+                                                    @for (int i = 0; i < (int)tutor.Rating; i++)
+                                                    {
+                                                        <i class="bi bi-star-fill"></i>
+                                                    }
+                                                </div>
+                                                <small class="text-muted">@tutor.Rating.ToString("F1") / 5.0</small>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h6 class="text-primary"><i class="bi bi-info-circle me-2"></i>About</h6>
+                                        <p>@(tutor.Bio ?? "No bio available")</p>
+
+                                        <hr />
+
+                                        <div class="row">
+                                            <div class="col-6 mb-3">
+                                                <strong><i class="bi bi-book me-2"></i>Subjects</strong>
+                                                <p class="mb-0">@(tutor.Subjects ?? "Not specified")</p>
+                                            </div>
+                                            <div class="col-6 mb-3">
+                                                <strong><i class="bi bi-mortarboard me-2"></i>Classes</strong>
+                                                <p class="mb-0">@(tutor.PreferredClasses ?? "Not specified")</p>
+                                            </div>
+                                            <div class="col-6 mb-3">
+                                                <strong><i class="bi bi-geo-alt me-2"></i>Locations</strong>
+                                                <p class="mb-0">@(tutor.PreferredLocations ?? "Not specified")</p>
+                                            </div>
+                                            <div class="col-6 mb-3">
+                                                <strong><i class="bi bi-briefcase me-2"></i>Experience</strong>
+                                                <p class="mb-0">@(tutor.Experience?.ToString() ?? "0") years</p>
+                                            </div>
+                                            <div class="col-12">
+                                                <strong><i class="bi bi-award me-2"></i>Education</strong>
+                                                <p class="mb-0">@(tutor.Education ?? "Not specified")</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <a asp-controller="TuitionOffer" asp-action="Index" class="btn btn-primary">
+                                    <i class="bi bi-briefcase me-2"></i>Browse Jobs to Hire
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else if (string.IsNullOrEmpty(Model.OriginalQuery))
+        {
+            <!-- Empty State - No Search Yet -->
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-robot text-white-50" style="font-size: 5rem;"></i>
+                    <h4 class="text-white mt-3">Start Your AI-Powered Search</h4>
+                    <p class="text-white-50">
+                        Describe the tutor you're looking for in the search box above.<br />
+                        Our AI will understand your needs and find the best matches.
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- No Results -->
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-search text-white-50" style="font-size: 5rem;"></i>
+                    <h4 class="text-white mt-3">No Tutors Found</h4>
+                    <p class="text-white-50">
+                        Try adjusting your search criteria or use more general terms.<br />
+                        You can also browse all available tutors.
+                    </p>
+                    <a asp-controller="TuitionOffer" asp-action="Index" class="btn btn-outline-light mt-3">
+                        <i class="bi bi-grid me-2"></i>Browse All Jobs
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .tutor-card {
+        background: white;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .tutor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 10px;
+    }
+
+    .progress-bar {
+        border-radius: 10px;
+    }
+</style>
+
+@functions {
+    string GetMatchScoreColor(int score)
+    {
+        return score switch
+        {
+            >= 70 => "bg-success",
+            >= 50 => "bg-warning",
+            >= 30 => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}

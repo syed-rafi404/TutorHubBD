@@ -6,7 +6,7 @@
 
 <div class="container mt-5 mb-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
+        <div class="col-md-10 col-lg-8">
             @if (TempData["StatusMessage"] != null)
             {
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -23,168 +23,343 @@
                 </div>
             }
 
-            <!-- Tutor Profile Card -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="bi bi-person-circle me-2"></i>Tutor Profile
-                    </h4>
+            <!-- Profile Completeness Status -->
+            @if (!Model.IsProfileComplete)
+            {
+                <div class="alert alert-warning mb-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Your profile is incomplete!</strong> Complete all required fields to apply for jobs.
+                    <ul class="mb-0 mt-2">
+                        @if (string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                        {
+                            <li>Upload a profile picture</li>
+                        }
+                        @if (string.IsNullOrEmpty(Model.Bio) || Model.Bio.Length < 100)
+                        {
+                            <li>Write a bio (at least 100 characters)</li>
+                        }
+                        @if (!Model.SelectedClasses.Any())
+                        {
+                            <li>Select your preferred classes</li>
+                        }
+                        @if (!Model.IsVerified)
+                        {
+                            <li>Get verified by admin</li>
+                        }
+                    </ul>
                 </div>
-                <div class="card-body">
-                    <form asp-action="EditProfile" method="post">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" asp-for="TutorID" />
+            }
+            else
+            {
+                <div class="alert alert-success mb-4">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Your profile is complete!</strong> You can apply for jobs.
+                </div>
+            }
+
+            <!-- Tutor Profile Card - Using glass-card style -->
+            <div class="glass-card p-4 p-md-5 mb-4">
+                <div class="text-center mb-4">
+                    <h2 class="mb-1"><i class="bi bi-person-badge me-2"></i>Tutor Profile</h2>
+                    <p class="text-white-50">Complete your profile to apply for tuition jobs</p>
+                </div>
+
+                <form asp-action="EditProfile" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="TutorID" />
+                    
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <!-- Profile Picture Section -->
+                    <div class="text-center mb-4">
+                        @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                        {
+                            <img src="@Model.ProfilePictureUrl" alt="Profile Picture" 
+                                 class="rounded-circle border border-3 border-light shadow mb-3" 
+                                 style="width: 150px; height: 150px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3 border border-3 border-light"
+                                 style="width: 150px; height: 150px;">
+                                <i class="bi bi-person-fill text-white" style="font-size: 4rem;"></i>
+                            </div>
+                        }
                         
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-
                         <div class="mb-3">
-                            <label asp-for="Education" class="form-label">
-                                <i class="bi bi-mortarboard me-1"></i>Education
+                            <label asp-for="ProfilePicture" class="form-label text-white">
+                                <i class="bi bi-camera me-1"></i>Upload Profile Picture <span class="text-danger">*</span>
                             </label>
-                            <input asp-for="Education" class="form-control" placeholder="e.g., BSc in Computer Science, University of Dhaka" />
-                            <span asp-validation-for="Education" class="text-danger small"></span>
+                            <input asp-for="ProfilePicture" type="file" class="form-control" accept=".jpg,.jpeg,.png,.gif" />
+                            <span asp-validation-for="ProfilePicture" class="text-danger small"></span>
+                            <small class="text-white-50 d-block mt-1">Accepted formats: JPG, PNG, GIF (Max 2MB)</small>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Subjects" class="form-label">
-                                <i class="bi bi-book me-1"></i>Subjects You Teach
-                            </label>
-                            <input asp-for="Subjects" class="form-control" placeholder="e.g., Mathematics, Physics, English" />
-                            <span asp-validation-for="Subjects" class="text-danger small"></span>
+                    <hr class="my-4 border-light" />
+
+                    <!-- Education -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Education" class="form-control" placeholder="Education" />
+                        <label asp-for="Education"><i class="bi bi-mortarboard me-1"></i>Education</label>
+                        <span asp-validation-for="Education" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Experience -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Experience" type="number" class="form-control" min="0" max="50" placeholder="Years of Experience" />
+                        <label asp-for="Experience"><i class="bi bi-briefcase me-1"></i>Years of Experience</label>
+                        <span asp-validation-for="Experience" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Subjects -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="Subjects" class="form-control" placeholder="Subjects" />
+                        <label asp-for="Subjects"><i class="bi bi-book me-1"></i>Subjects You Teach</label>
+                        <span asp-validation-for="Subjects" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Preferred Locations -->
+                    <div class="form-floating mb-3">
+                        <input asp-for="PreferredLocations" class="form-control" placeholder="Preferred Locations" />
+                        <label asp-for="PreferredLocations"><i class="bi bi-geo-alt me-1"></i>Preferred Locations</label>
+                        <span asp-validation-for="PreferredLocations" class="text-danger small"></span>
+                        <small class="text-white-50 d-block mt-1">Enter locations separated by commas (e.g., Dhaka, Chittagong, Online)</small>
+                    </div>
+
+                    <!-- Bio Section -->
+                    <div class="mb-3">
+                        <label asp-for="Bio" class="form-label text-white">
+                            <i class="bi bi-file-text me-1"></i>Bio <span class="text-danger">*</span>
+                        </label>
+                        <textarea asp-for="Bio" class="form-control" rows="5" id="bioTextarea"
+                                  placeholder="Write about yourself, your teaching experience, achievements, and why you are a great tutor..."></textarea>
+                        <div class="d-flex justify-content-between mt-1">
+                            <span asp-validation-for="Bio" class="text-danger small"></span>
+                            <small id="bioCharCount" class="text-white-50">
+                                <span id="currentCount">@(Model.Bio?.Length ?? 0)</span>/100 characters (minimum)
+                            </small>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Experience" class="form-label">
-                                    <i class="bi bi-briefcase me-1"></i>Years of Experience
-                                </label>
-                                <input asp-for="Experience" type="number" class="form-control" min="0" max="50" placeholder="e.g., 5" />
-                                <span asp-validation-for="Experience" class="text-danger small"></span>
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    <i class="bi bi-star me-1"></i>Rating
-                                </label>
-                                <div class="form-control-plaintext">
-                                    @if (Model.Rating > 0)
-                                    {
-                                        <span class="text-warning">
-                                            @for (int i = 0; i < (int)Model.Rating; i++)
-                                            {
-                                                <i class="bi bi-star-fill"></i>
-                                            }
-                                            @if (Model.Rating % 1 >= 0.5)
-                                            {
-                                                <i class="bi bi-star-half"></i>
-                                            }
-                                        </span>
-                                        <span class="ms-2">(@Model.Rating.ToString("F1"))</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">No ratings yet</span>
-                                    }
+                    <!-- Preferred Classes Multi-Select -->
+                    <div class="mb-4">
+                        <label class="form-label text-white">
+                            <i class="bi bi-list-check me-1"></i>Preferred Classes <span class="text-danger">*</span>
+                        </label>
+                        <small class="text-white-50 d-block mb-3">Select all classes you are willing to teach</small>
+                        
+                        <div class="row g-2">
+                            @foreach (var classOption in Model.AvailableClasses)
+                            {
+                                var isChecked = Model.SelectedClasses.Contains(classOption);
+                                <div class="col-6 col-md-4 col-lg-3">
+                                    <div class="form-check class-checkbox p-2 rounded @(isChecked ? "bg-primary bg-opacity-25" : "bg-dark bg-opacity-25")">
+                                        <input class="form-check-input" type="checkbox" 
+                                               name="SelectedClasses" 
+                                               value="@classOption" 
+                                               id="class_@classOption.Replace(" ", "_")"
+                                               @(isChecked ? "checked" : "") />
+                                        <label class="form-check-label text-white w-100" for="class_@classOption.Replace(" ", "_")">
+                                            @classOption
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
+                            }
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label asp-for="PreferredLocations" class="form-label">
-                                <i class="bi bi-geo-alt me-1"></i>Preferred Locations
-                            </label>
-                            <input asp-for="PreferredLocations" class="form-control" placeholder="e.g., Dhaka, Chittagong, Online" />
-                            <small class="text-muted">Enter locations separated by commas where you prefer to teach</small>
-                            <span asp-validation-for="PreferredLocations" class="text-danger small"></span>
+                    <!-- Rating Display -->
+                    <div class="mb-4 p-3 rounded" style="background: rgba(255,255,255,0.1);">
+                        <label class="form-label text-white">
+                            <i class="bi bi-star me-1"></i>Your Rating
+                        </label>
+                        <div>
+                            @if (Model.Rating > 0)
+                            {
+                                <span class="text-warning">
+                                    @for (int i = 0; i < (int)Model.Rating; i++)
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    @if (Model.Rating % 1 >= 0.5)
+                                    {
+                                        <i class="bi bi-star-half"></i>
+                                    }
+                                    @for (int i = (int)Math.Ceiling(Model.Rating); i < 5; i++)
+                                    {
+                                        <i class="bi bi-star text-secondary"></i>
+                                    }
+                                </span>
+                                <span class="ms-2 text-white">(@Model.Rating.ToString("F1") / 5.0)</span>
+                            }
+                            else
+                            {
+                                <span class="text-white-50"><i class="bi bi-star text-secondary"></i> No ratings yet</span>
+                            }
                         </div>
+                    </div>
 
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-save me-2"></i>Save Profile
-                        </button>
-                    </form>
-                </div>
+                    <button type="submit" class="btn btn-gradient w-100 py-3">
+                        <i class="bi bi-save me-2"></i>Save Profile
+                    </button>
+                </form>
             </div>
 
             <!-- Verification Status Card -->
-            <div class="card">
-                <div class="card-header @(Model.IsVerified ? "bg-success" : "bg-warning") text-white">
-                    <h4 class="mb-0">
-                        <i class="bi bi-shield-check me-2"></i>Verification Status
-                    </h4>
-                </div>
-                <div class="card-body">
+            <div class="glass-card p-4 p-md-5">
+                <div class="text-center mb-4">
                     @if (Model.IsVerified)
                     {
-                        <div class="alert alert-success mb-0">
-                            <i class="bi bi-check-circle-fill me-2"></i>
-                            <strong>Verified!</strong> Your profile has been verified by the admin.
-                        </div>
-                    }
-                    else if (Model.HasPendingVerification)
-                    {
-                        <div class="alert alert-info">
-                            <i class="bi bi-clock-history me-2"></i>
-                            <strong>Pending Verification</strong>
-                            <p class="mb-0 mt-2">
-                                Your verification request is under review. 
-                                <br />
-                                <small class="text-muted">
-                                    Submitted on: @Model.VerificationRequestDate?.ToString("MMMM dd, yyyy hh:mm tt")
-                                </small>
-                            </p>
-                        </div>
-                        
-                        <p class="text-muted">You can upload a new document to replace your current submission:</p>
+                        <i class="bi bi-shield-fill-check text-success" style="font-size: 3rem;"></i>
+                        <h3 class="mt-2 text-white">Verified Tutor</h3>
                     }
                     else
                     {
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
-                            <strong>Not Verified</strong>
-                            <p class="mb-0 mt-2">
-                                Upload your verification document (ID card, certificate, etc.) to get verified.
-                                Verified tutors get more visibility and trust from students.
-                            </p>
-                        </div>
-                    }
-
-                    @if (!Model.IsVerified)
-                    {
-                        <hr />
-                        <h5>Upload Verification Document</h5>
-                        <p class="text-muted small">
-                            Accepted formats: PDF, JPG, PNG, DOC, DOCX (Max 5MB)
-                            <br />
-                            Please upload a valid ID (NID, Passport, Student ID) or educational certificate.
-                        </p>
-                        
-                        <form asp-action="UploadVerification" method="post" enctype="multipart/form-data">
-                            @Html.AntiForgeryToken()
-                            
-                            <div class="mb-3">
-                                <input type="file" class="form-control" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required />
-                            </div>
-                            
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-upload me-2"></i>Upload Document
-                            </button>
-                        </form>
-                    }
-
-                    @if (!string.IsNullOrEmpty(Model.VerificationDocumentPath))
-                    {
-                        <hr />
-                        <p class="mb-2"><strong>Current Document:</strong></p>
-                        <a href="@Model.VerificationDocumentPath" target="_blank" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-file-earmark me-2"></i>View Uploaded Document
-                        </a>
+                        <i class="bi bi-shield-exclamation text-warning" style="font-size: 3rem;"></i>
+                        <h3 class="mt-2 text-white">Verification Status</h3>
                     }
                 </div>
+
+                @if (Model.IsVerified)
+                {
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <strong>Verified!</strong> Your profile has been verified by the admin. You can now apply for jobs.
+                    </div>
+                }
+                else if (Model.HasPendingVerification)
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-clock-history me-2"></i>
+                        <strong>Pending Verification</strong>
+                        <p class="mb-0 mt-2">
+                            Your verification request is under review. 
+                            <br />
+                            <small class="text-muted">
+                                Submitted on: @Model.VerificationRequestDate?.ToString("MMMM dd, yyyy hh:mm tt")
+                            </small>
+                        </p>
+                    </div>
+                    
+                    <p class="text-white-50">You can upload a new document to replace your current submission:</p>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Not Verified</strong>
+                        <p class="mb-0 mt-2">
+                            Upload your verification document (ID card, certificate, etc.) to get verified.
+                            Verified tutors get more visibility and trust from guardians.
+                        </p>
+                    </div>
+                }
+
+                @if (!Model.IsVerified)
+                {
+                    <hr class="my-4 border-light" />
+                    
+                    <h5 class="text-white mb-3"><i class="bi bi-upload me-2"></i>Upload Verification Document</h5>
+                    <p class="text-white-50 small mb-3">
+                        <strong>Accepted formats:</strong> PDF, JPG, PNG, DOC, DOCX (Max 5MB)
+                        <br />
+                        Please upload a valid ID (NID, Passport, Student ID) or educational certificate.
+                    </p>
+                    
+                    <form asp-action="UploadVerification" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="mb-3">
+                            <input type="file" class="form-control" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" required />
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 py-2">
+                            <i class="bi bi-cloud-upload me-2"></i>Upload Document
+                        </button>
+                    </form>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.VerificationDocumentPath))
+                {
+                    <hr class="my-4 border-light" />
+                    <p class="text-white mb-2"><strong>Current Document:</strong></p>
+                    <a href="@Model.VerificationDocumentPath" target="_blank" class="btn btn-outline-light">
+                        <i class="bi bi-file-earmark-text me-2"></i>View Uploaded Document
+                    </a>
+                }
             </div>
         </div>
     </div>
 </div>
 
+<style>
+    .class-checkbox {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .class-checkbox:hover {
+        background: rgba(255,255,255,0.15) !important;
+        border-color: rgba(255,255,255,0.4);
+    }
+    .class-checkbox .form-check-input:checked ~ .form-check-label {
+        font-weight: 600;
+    }
+    .form-floating > .form-control:focus ~ label,
+    .form-floating > .form-control:not(:placeholder-shown) ~ label {
+        color: rgba(255,255,255,0.8);
+    }
+    .form-floating > label {
+        color: rgba(255,255,255,0.6);
+    }
+</style>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Bio character counter
+        document.addEventListener('DOMContentLoaded', function() {
+            const bioTextarea = document.getElementById('bioTextarea');
+            const currentCount = document.getElementById('currentCount');
+            const bioCharCount = document.getElementById('bioCharCount');
+            
+            if (bioTextarea && currentCount) {
+                bioTextarea.addEventListener('input', function() {
+                    const length = this.value.length;
+                    currentCount.textContent = length;
+                    
+                    if (length >= 100) {
+                        bioCharCount.classList.remove('text-danger');
+                        bioCharCount.classList.add('text-success');
+                    } else {
+                        bioCharCount.classList.remove('text-success');
+                        bioCharCount.classList.add('text-danger');
+                    }
+                });
+                
+                // Trigger on page load
+                bioTextarea.dispatchEvent(new Event('input'));
+            }
+            
+            // Make entire checkbox div clickable
+            document.querySelectorAll('.class-checkbox').forEach(function(div) {
+                div.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'INPUT') {
+                        const checkbox = this.querySelector('input[type="checkbox"]');
+                        checkbox.checked = !checkbox.checked;
+                        
+                        if (checkbox.checked) {
+                            this.classList.remove('bg-dark');
+                            this.classList.add('bg-primary');
+                        } else {
+                            this.classList.remove('bg-primary');
+                            this.classList.add('bg-dark');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 }

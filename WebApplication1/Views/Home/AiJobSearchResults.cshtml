@@ -1,0 +1,296 @@
+@model TutorHubBD.Web.Models.ViewModels.AiJobSearchResultsViewModel
+
+@{
+    ViewData["Title"] = "AI Job Search";
+}
+
+<div class="container mt-5 mb-5">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="text-white fw-bold" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+            <i class="bi bi-robot me-2"></i>AI-Powered Job Search
+        </h1>
+        <p class="text-white-50">Describe your ideal tuition job and let AI find the best matches for you</p>
+    </div>
+
+    <!-- Search Form -->
+    <div class="glass-card p-4 mb-5">
+        <form asp-action="AiJobSearch" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row align-items-end">
+                <div class="col-md-10 mb-3 mb-md-0">
+                    <label class="form-label text-white fw-bold">
+                        <i class="bi bi-chat-dots me-2"></i>Describe Your Ideal Tuition Job
+                    </label>
+                    <textarea name="prompt" class="form-control" rows="3" 
+                              placeholder="Example: I'm looking for a Math tuition job in Mirpur, Dhaka for Class 8-10 students. I prefer English medium with salary at least 8000 tk per month."
+                              style="resize: none;">@Model.OriginalQuery</textarea>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-gradient w-100 py-3">
+                        <i class="bi bi-search me-2"></i>Find Jobs
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Error Message -->
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>@Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Extracted Criteria (Debug/Info) -->
+    @if (Model.ExtractedCriteria != null && Model.ExtractedCriteria.IsValid)
+    {
+        <div class="glass-card p-3 mb-4">
+            <h6 class="text-white mb-2"><i class="bi bi-lightbulb me-2"></i>AI Understood Your Requirements:</h6>
+            <div class="d-flex flex-wrap gap-2">
+                @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.Subject))
+                {
+                    <span class="badge bg-primary"><i class="bi bi-book me-1"></i>@Model.ExtractedCriteria.Subject</span>
+                }
+                @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.ClassLevel))
+                {
+                    <span class="badge bg-success"><i class="bi bi-mortarboard me-1"></i>@Model.ExtractedCriteria.ClassLevel</span>
+                }
+                @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.City))
+                {
+                    <span class="badge bg-info"><i class="bi bi-geo-alt me-1"></i>@Model.ExtractedCriteria.City</span>
+                }
+                @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.Location))
+                {
+                    <span class="badge bg-secondary"><i class="bi bi-pin-map me-1"></i>@Model.ExtractedCriteria.Location</span>
+                }
+                @if (!string.IsNullOrEmpty(Model.ExtractedCriteria.Medium))
+                {
+                    <span class="badge bg-warning text-dark"><i class="bi bi-translate me-1"></i>@Model.ExtractedCriteria.Medium Medium</span>
+                }
+                @if (Model.ExtractedCriteria.MinSalary.HasValue)
+                {
+                    <span class="badge bg-success"><i class="bi bi-currency-exchange me-1"></i>Min ?@Model.ExtractedCriteria.MinSalary</span>
+                }
+                @foreach (var keyword in Model.ExtractedCriteria.Keywords)
+                {
+                    <span class="badge bg-secondary">@keyword</span>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Results Count -->
+    @if (Model.Results.Any())
+    {
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="text-white mb-0">
+                <i class="bi bi-briefcase me-2"></i>@Model.Results.Count Job(s) Found
+            </h5>
+        </div>
+
+        <!-- Results Grid -->
+        <div class="row">
+            @foreach (var job in Model.Results)
+            {
+                <div class="col-lg-6 mb-4">
+                    <div class="card job-result-card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge bg-success me-2">
+                                    <i class="bi bi-bullseye me-1"></i>@job.MatchScore% Match
+                                </span>
+                                <span class="badge bg-info">Open</span>
+                            </div>
+                            <span class="text-muted small">
+                                <i class="bi bi-calendar me-1"></i>@job.CreatedAt.ToString("MMM dd, yyyy")
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title text-primary fw-bold">@job.Title</h5>
+                            
+                            <div class="job-info mb-3">
+                                <div class="info-row">
+                                    <i class="bi bi-geo-alt-fill text-danger"></i>
+                                    <span>@job.City@(string.IsNullOrEmpty(job.Location) ? "" : $", {job.Location}")</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(job.StudentClass))
+                                {
+                                    <div class="info-row">
+                                        <i class="bi bi-mortarboard-fill text-primary"></i>
+                                        <span>@job.StudentClass</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(job.Medium))
+                                {
+                                    <div class="info-row">
+                                        <i class="bi bi-translate text-info"></i>
+                                        <span>@job.Medium Medium</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(job.Subject))
+                                {
+                                    <div class="info-row">
+                                        <i class="bi bi-book-fill text-success"></i>
+                                        <span>@job.Subject</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(job.DaysPerWeek))
+                                {
+                                    <div class="info-row">
+                                        <i class="bi bi-calendar-week text-secondary"></i>
+                                        <span>@job.DaysPerWeek</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="salary-badge mb-3">
+                                <i class="bi bi-currency-exchange"></i>
+                                <span class="fw-bold">?@job.Salary / month</span>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(job.Description))
+                            {
+                                <p class="card-text text-muted small">
+                                    @(job.Description.Length > 150 ? job.Description.Substring(0, 150) + "..." : job.Description)
+                                </p>
+                            }
+
+                            <div class="text-muted small">
+                                <i class="bi bi-person me-1"></i>Posted by: @job.GuardianName
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a asp-controller="TuitionRequest" asp-action="Apply" asp-route-jobId="@job.JobId" 
+                               class="btn btn-primary w-100">
+                                <i class="bi bi-send me-2"></i>Apply Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Model.OriginalQuery))
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-search text-white-50" style="font-size: 4rem;"></i>
+            <h4 class="text-white mt-3">No Jobs Found</h4>
+            <p class="text-white-50">Try different keywords or check back later for new job postings.</p>
+            <a asp-controller="TuitionOffer" asp-action="Index" class="btn btn-outline-light mt-3">
+                <i class="bi bi-list me-2"></i>Browse All Available Jobs
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Initial State - Show Example Queries -->
+        <div class="glass-card p-4">
+            <h5 class="text-white mb-3"><i class="bi bi-lightbulb me-2"></i>Try These Example Searches:</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="example-query" onclick="document.querySelector('textarea[name=prompt]').value = this.innerText;">
+                        <i class="bi bi-chat-quote text-primary me-2"></i>
+                        "I want to teach Physics to HSC students in Dhanmondi"
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="example-query" onclick="document.querySelector('textarea[name=prompt]').value = this.innerText;">
+                        <i class="bi bi-chat-quote text-primary me-2"></i>
+                        "Looking for English medium Math tuition in Uttara with good salary"
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="example-query" onclick="document.querySelector('textarea[name=prompt]').value = this.innerText;">
+                        <i class="bi bi-chat-quote text-primary me-2"></i>
+                        "Class 5-8 tuition job in Mirpur, minimum 6000 tk"
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="example-query" onclick="document.querySelector('textarea[name=prompt]').value = this.innerText;">
+                        <i class="bi bi-chat-quote text-primary me-2"></i>
+                        "I can teach Chemistry and Biology in Chittagong"
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .job-result-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .job-result-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .job-result-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px 15px 0 0 !important;
+        border-bottom: none;
+    }
+
+    .job-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .info-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+    }
+
+    .info-row i {
+        width: 20px;
+        text-align: center;
+    }
+
+    .salary-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 1rem;
+    }
+
+    .example-query {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 15px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .example-query:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(5px);
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        font-weight: 600;
+    }
+
+    .btn-gradient:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        color: white;
+    }
+</style>
