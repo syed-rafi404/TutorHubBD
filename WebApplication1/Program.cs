@@ -8,17 +8,41 @@ using TutorHubBD.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => 
-    options.SignIn.RequireConfirmedAccount = false)
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+}
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+})
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    options.SlidingExpiration = true;
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
 
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
@@ -28,13 +52,10 @@ builder.Services.AddControllersWithViews()
     });
 builder.Services.AddRazorPages();
 
-// Configure Stripe Settings
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("StripeSettings"));
 
-// Register HttpClientFactory for AI Search
 builder.Services.AddHttpClient();
 
-// Register application services
 builder.Services.AddScoped<ITuitionOfferService, TuitionOfferService>();
 builder.Services.AddScoped<TuitionRequestService>();
 builder.Services.AddScoped<ICommissionService, CommissionService>();
@@ -43,62 +64,85 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<IAiSearchService, AiSearchService>();
 
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>();
+
 var app = builder.Build();
 
-// Seed roles and admin user
 using (var scope = app.Services.CreateScope())
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    
-    // Create roles if they don't exist
-    string[] roles = { "Admin", "Guardian", "Teacher" };
-    foreach (var role in roles)
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    try
     {
-        if (!await roleManager.RoleExistsAsync(role))
-            await roleManager.CreateAsync(new IdentityRole(role));
-    }
-    
-    // Seed Admin User
-    var adminEmail = "rafitheflash@gmail.com";
-    var adminPassword = "rafitheflash@gmail.comA1";
-    
-    var existingUser = await userManager.FindByEmailAsync(adminEmail);
-    
-    if (existingUser != null)
-    {
-        // Check if user is already admin
-        var isAdmin = await userManager.IsInRoleAsync(existingUser, "Admin");
-        if (!isAdmin)
+        // --- ADDED: Auto-create database tables on Azure startup ---
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.Migrate();
+        // -----------------------------------------------------------
+
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+        string[] roles = { "Admin", "Guardian", "Teacher" };
+        foreach (var role in roles)
         {
-            // Remove from other roles and add to Admin
-            var currentRoles = await userManager.GetRolesAsync(existingUser);
-            await userManager.RemoveFromRolesAsync(existingUser, currentRoles);
-            await userManager.AddToRoleAsync(existingUser, "Admin");
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+                logger.LogInformation("Created role: {Role}", role);
+            }
         }
-        
-        // Reset password to ensure it matches
-        var token = await userManager.GeneratePasswordResetTokenAsync(existingUser);
-        await userManager.ResetPasswordAsync(existingUser, token, adminPassword);
-    }
-    else
-    {
-        // Create new admin user
-        var adminUser = new ApplicationUser
+
+        var adminEmail = builder.Configuration["AdminSettings:Email"];
+        var adminPassword = builder.Configuration["AdminSettings:Password"];
+
+        if (!string.IsNullOrEmpty(adminEmail) && !string.IsNullOrEmpty(adminPassword))
         {
-            UserName = adminEmail,
-            Email = adminEmail,
-            FullName = "System Administrator",
-            EmailConfirmed = true,
-            Address = "",
-            Bio = ""
-        };
-        
-        var result = await userManager.CreateAsync(adminUser, adminPassword);
-        if (result.Succeeded)
-        {
-            await userManager.AddToRoleAsync(adminUser, "Admin");
+            var existingUser = await userManager.FindByEmailAsync(adminEmail);
+
+            if (existingUser == null)
+            {
+                var adminUser = new ApplicationUser
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    FullName = "System Administrator",
+                    EmailConfirmed = true,
+                    Address = "",
+                    Bio = ""
+                };
+
+                var result = await userManager.CreateAsync(adminUser, adminPassword);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                    logger.LogInformation("Admin user created successfully");
+                }
+                else
+                {
+                    logger.LogError("Failed to create admin user: {Errors}",
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                }
+            }
+            else
+            {
+                var isAdmin = await userManager.IsInRoleAsync(existingUser, "Admin");
+                if (!isAdmin)
+                {
+                    await userManager.AddToRoleAsync(existingUser, "Admin");
+                    logger.LogInformation("Added Admin role to existing user");
+                }
+            }
         }
+        else if (app.Environment.IsDevelopment())
+        {
+            logger.LogWarning("Admin settings not configured. Set AdminSettings:Email and AdminSettings:Password in configuration.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while seeding the database");
     }
 }
 
@@ -117,6 +161,8 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHealthChecks("/health");
 
 app.MapControllerRoute(
     name: "default",

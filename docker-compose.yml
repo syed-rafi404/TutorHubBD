@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=${DB_CONNECTION_STRING}
+      - EmailSettings__MailServer=smtp.gmail.com
+      - EmailSettings__MailPort=587
+      - EmailSettings__SenderName=TutorHubBD Support
+      - EmailSettings__SenderEmail=${EMAIL_SENDER}
+      - EmailSettings__SenderPassword=${EMAIL_PASSWORD}
+      - StripeSettings__SecretKey=${STRIPE_SECRET_KEY}
+      - StripeSettings__PublishableKey=${STRIPE_PUBLISHABLE_KEY}
+      - GeminiApi__ApiKey=${GEMINI_API_KEY}
+      - AdminSettings__Email=${ADMIN_EMAIL}
+      - AdminSettings__Password=${ADMIN_PASSWORD}
+    depends_on:
+      - db
+    restart: unless-stopped
+    volumes:
+      - uploads:/app/wwwroot/uploads
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${DB_SA_PASSWORD}
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    restart: unless-stopped
+
+volumes:
+  sqldata:
+  uploads:

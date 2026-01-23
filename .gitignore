@@ -1,4 +1,104 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
 .vs/
-bin/
-obj/
+*.suo
 *.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.rsuser
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!packages/packages.lock.json
+
+# Build output
+publish/
+*.pubxml
+*.pubxml.user
+*.azurePubxml
+
+# Secret files - IMPORTANT: Keep sensitive data out of source control
+appsettings.Production.json
+appsettings.Local.json
+secrets.json
+*.secrets
+*.pfx
+*.key
+
+# SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+# ASP.NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+ScaffoldingReadMe.txt
+
+# IDE
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS files
+.DS_Store
+*.swp
+*.swo
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Python test files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+.env
+
+# Uploads folder content (keep structure, ignore user uploads)
+wwwroot/uploads/profiles/*
+wwwroot/uploads/docs/*
+wwwroot/uploads/tutor-profiles/*
+!wwwroot/uploads/.gitkeep
+!wwwroot/uploads/profiles/.gitkeep
+!wwwroot/uploads/docs/.gitkeep
+!wwwroot/uploads/tutor-profiles/.gitkeep
+
+# JetBrains Rider
+.idea/
+*.sln.iml
