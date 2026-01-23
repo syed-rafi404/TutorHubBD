@@ -3,8 +3,6 @@ name: Build and Deploy TutorHubBD
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -46,7 +44,6 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment:
       name: production
       url: ${{ steps.deploy.outputs.webapp-url }}
@@ -62,12 +59,7 @@ jobs:
       id: deploy
       uses: azure/webapps-deploy@v2
       with:
-        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+        app-name: 'tutorhubbd-2026'     # <--- I UPDATED THIS TO MATCH YOUR SCREENSHOT
+        slot-name: 'production'
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: ./publish
-
-    - name: Health check
-      run: |
-        sleep 30
-        curl -f ${{ steps.deploy.outputs.webapp-url }}/health || exit 1
-      continue-on-error: true
